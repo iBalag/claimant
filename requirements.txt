@@ -1,0 +1,5 @@
+aiohttp[speedups]
+uvloop
+ujson
+aiogram
+python-dotenv
