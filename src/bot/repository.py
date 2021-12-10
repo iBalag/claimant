@@ -13,3 +13,14 @@ def get_regions_list() -> List[dict]:
     with open("../../resources/regions.json") as f:
         regions: List[dict] = json.load(f)
         return regions
+
+
+def get_region_code(region_name: str) -> str:
+    # TODO: get regions from DB
+    with open("../../resources/regions.json") as f:
+        regions: List[dict] = json.load(f)
+        code: int
+        for regin in regions:
+            if regin["name"] == region_name:
+                return regin["code"]
+        return -1

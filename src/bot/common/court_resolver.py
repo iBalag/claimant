@@ -45,7 +45,7 @@ def parse_court_data(raw_data: str, city: str) -> List[CourtInfo]:
     return result
 
 
-async def resolve_court_address(city: str, court_subj: int, street: str) -> List[CourtInfo]:
+async def resolve_court_address(city: str, court_subj: str, street: str) -> List[CourtInfo]:
     url: str = f"https://sudrf.ru/index.php?id=300&&act=go_search&searchtype=fs&court_type=RS&" \
                f"fs_city={to_url(city)}" \
                f"&fs_street={to_url(street)}" \
