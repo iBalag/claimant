@@ -30,7 +30,6 @@ async def choose_claim_part(message: types.Message):
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start_menu, commands=["start", "назад"])
     dp.register_message_handler(show_bot_info, commands=["информация"])
-    # dp.register_message_handler(choose_claim_tmp, filters.Regexp("^/выбор операции$"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))
 
     tmp_names: List[str] = repository.get_tmps_list()
