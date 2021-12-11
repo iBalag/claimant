@@ -1,13 +1,13 @@
-from typing import List
-
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+
 import repository
+from keyboards import emojis
 
 
 def get_start_menu_kb() -> ReplyKeyboardMarkup:
     star_btn = KeyboardButton("/начать")
     info_btn = KeyboardButton("/информация")
-    choose_claim_tmp_btn = KeyboardButton("/выбор операции")
+    choose_claim_tmp_btn = KeyboardButton(f"{emojis.fist} выбор операции")
     start_menu_kb = ReplyKeyboardMarkup(resize_keyboard=True)
     start_menu_kb\
         .add(star_btn)\

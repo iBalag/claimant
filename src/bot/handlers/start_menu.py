@@ -4,7 +4,7 @@ from aiogram import types, Dispatcher, filters
 from aiogram.types import ReplyKeyboardMarkup
 
 import repository
-from keyboards import get_start_menu_kb, get_claim_tmps_list_kb, get_claim_parts_kb
+from keyboards import get_start_menu_kb, get_claim_tmps_list_kb, get_claim_parts_kb, emojis
 
 
 async def start_menu(message: types.Message):
@@ -30,7 +30,8 @@ async def choose_claim_part(message: types.Message):
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start_menu, commands=["start", "назад"])
     dp.register_message_handler(show_bot_info, commands=["информация"])
-    dp.register_message_handler(choose_claim_tmp, filters.Regexp("^/выбор операции$"))
+    # dp.register_message_handler(choose_claim_tmp, filters.Regexp("^/выбор операции$"))
+    dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))
 
     tmp_names: List[str] = repository.get_tmps_list()
     tmp_regex: str = f"^/({'|'.join([tn for tn in tmp_names])})$"
