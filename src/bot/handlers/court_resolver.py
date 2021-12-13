@@ -91,7 +91,7 @@ async def street_chosen(message: types.Message, state: FSMContext):
 
 async def court_chosen(message: types.Message, state: FSMContext):
     court_number_raw: Optional[str] = message.get_args()
-    if court_number_raw is None or court_number_raw.isdigit():
+    if court_number_raw is None or not court_number_raw.isdigit():
         # TODO: return keyboard with one button 'back to region choose'
         await message.reply("Выберите подходящий суд для подачи заявления с помощью команды /суд. "
                             "Например: /суд 1", reply_markup=ReplyKeyboardRemove())
@@ -101,7 +101,7 @@ async def court_chosen(message: types.Message, state: FSMContext):
     chosen_court: CourtInfo = user_data['court_info'][int(court_number_raw) - 1]
     await message.reply(fmt.text(
         fmt.text("Выбранный суд:", ),
-        fmt.text(fmt.hunderline(f"Название:"), f" {chosen_court.name}"),
+        fmt.text(fmt.hunderline("Название:"), f" {chosen_court.name}"),
         fmt.text(f"Адрес: {chosen_court.address}", ),
         sep="\n"
     ), parse_mode="HTML")
