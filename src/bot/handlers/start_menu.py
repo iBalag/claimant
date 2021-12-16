@@ -28,11 +28,13 @@ async def choose_claim_part(message: types.Message):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(start_menu, commands=["start", "назад"])
-    dp.register_message_handler(show_bot_info, commands=["информация"])
+    dp.register_message_handler(start_menu, commands=["start"])
+    dp.register_message_handler(start_menu, filters.Regexp(f"^{emojis.left_arrow} назад"))
+    dp.register_message_handler(show_bot_info, filters.Regexp(f"^{emojis.bookmark_tabs} информация$"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))
+    dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.left_arrow} к выбору\nчасти заявления"))
 
     tmp_names: List[str] = repository.get_tmps_list()
-    tmp_regex: str = f"^/({'|'.join([tn for tn in tmp_names])})$"
+    tmp_regex: str = f"^{emojis.page_facing_up} ({'|'.join([tn for tn in tmp_names])})$"
     dp.register_message_handler(choose_claim_part, filters.Regexp(tmp_regex))
 
