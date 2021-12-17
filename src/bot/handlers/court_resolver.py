@@ -8,7 +8,6 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButt
 import aiogram.utils.markdown as fmt
 
 import repository
-from keyboards import get_regions_list_kb
 
 from common import CourtInfo, resolve_court_address
 
@@ -75,18 +74,19 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
     apartment: Optional[str] = message.text
     if apartment == "нет":
         await state.update_data(apartment_chosen="")
-    if not apartment.isdigit():
+    elif not apartment.isdigit():
         await message.reply("Номер дома нужно указать цифрой. "
                             "Если ты живешь в частном доме, просто ответь: нет",
                             reply_markup=ReplyKeyboardRemove())
         return
 
-    await state.update_data(apartment_chosen="")
+    await state.update_data(apartment_chosen=apartment)
     user_data = await state.get_data()
     region_code: str = repository.get_region_code(user_data["user_post_code"])
     court_info: List[CourtInfo] = await resolve_court_address(city=user_data["chosen_city"],
                                                               court_subj=region_code, street=user_data["chosen_street"])
     if len(court_info) == 0:
+        # TODO: provide user ability to enter court info by himself
         await ResolveCourt.waiting_for_user_city.set()
         await message.reply(f"Для данного города '{user_data['chosen_city']}' и улицы '{user_data['chosen_street']}' "
                             f"не найдено суда. Пожалуйста, попробуйте ввести другой город или улицу.",
@@ -102,14 +102,16 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
     await state.update_data(court_info=court_info)
     for i, c_info in enumerate(court_info, 1):
         await message.reply(fmt.text(
-            fmt.text(fmt.hunderline(f"{i}. Название:"), f" {c_info.name}"),
+            fmt.text(fmt.bold(f"{i}. {c_info.name}")),
             fmt.text(f"Адрес: {c_info.address}",),
             fmt.text(f"Примечание: {c_info.note}"),
             sep="\n"
         ), parse_mode="HTML")
 
     await ResolveCourt.waiting_for_court_chosen.set()
-    await message.reply(f"Выберите подходящий суд для подачи заявления: {', '.join(list(range(1, len(court_info)+1)))}",
+    court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
+    await message.reply(f"Выберите подходящий суд для подачи заявления: "
+                        f"{', '.join(court_options)}",
                         reply_markup=ReplyKeyboardRemove())
 
 
@@ -118,16 +120,16 @@ async def court_chosen(message: types.Message, state: FSMContext):
     court_info: List[CourtInfo] = user_data['court_info']
     court_number_raw: Optional[str] = message.text
     if court_number_raw is None or not court_number_raw.isdigit() \
-            or int(court_number_raw) not in range(len(court_info)):
-        # TODO: return keyboard with one button 'back to region choose'
-        await message.reply(f"Выберите подходящий суд для подачи заявления: {', '.join(list(range(1, len(court_info)+1)))}",
+            or int(court_number_raw) not in list(range(len(court_info)+1)):
+        court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
+        await message.reply(f"Выберите подходящий суд для подачи заявления: {', '.join(court_options)}",
                             reply_markup=ReplyKeyboardRemove())
         return
 
     chosen_court: CourtInfo = user_data["court_info"][int(court_number_raw) - 1]
     await state.update_data(chosen_court=chosen_court)
     await ResolveCourt.waiting_for_employer_name.set()
-    await message.answer("Введите название организации, в которой вы работаете")
+    await message.answer("Введите название организации, в которой вы работаете. Например: OOO \"Рога и Копыта\"")
 
 
 async def employer_name_chosen(message: types.Message, state: FSMContext):
