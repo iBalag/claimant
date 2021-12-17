@@ -1,10 +1,15 @@
-from aiogram import executor
+from aiogram import executor, Dispatcher
 
 from handlers import start_menu, court_resolver
 from init_bot import dp
 
 
+async def shutdown(dispatcher: Dispatcher):
+    await dispatcher.storage.close()
+    await dispatcher.storage.wait_closed()
+
+
 if __name__ == "__main__":
     start_menu.register_handlers(dp)
     court_resolver.register_handlers(dp)
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True, on_shutdown=shutdown)
