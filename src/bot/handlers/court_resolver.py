@@ -101,8 +101,8 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
 
     await state.update_data(court_info=court_info)
     for i, c_info in enumerate(court_info, 1):
-        await message.reply(fmt.text(
-            fmt.text(fmt.bold(f"{i}. {c_info.name}")),
+        await message.answer(fmt.text(
+            fmt.text(f"{i}. {c_info.name}"),
             fmt.text(f"Адрес: {c_info.address}",),
             fmt.text(f"Примечание: {c_info.note}"),
             sep="\n"
@@ -110,9 +110,9 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
 
     await ResolveCourt.waiting_for_court_chosen.set()
     court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
-    await message.reply(f"Выберите подходящий суд для подачи заявления: "
-                        f"{', '.join(court_options)}",
-                        reply_markup=ReplyKeyboardRemove())
+    await message.answer(f"Выберите подходящий суд для подачи заявления: "
+                         f"{', '.join(court_options)}",
+                         reply_markup=ReplyKeyboardRemove())
 
 
 async def court_chosen(message: types.Message, state: FSMContext):
