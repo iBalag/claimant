@@ -2,6 +2,7 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 
 def get_claim_parts_kb() -> ReplyKeyboardMarkup:
+    # TODO: add OK emoji for filled parts
     claim_parts_kb = ReplyKeyboardMarkup(resize_keyboard=True)
     claim_parts_kb\
         .add(KeyboardButton("/шапка")) \
