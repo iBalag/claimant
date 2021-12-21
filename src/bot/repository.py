@@ -1,27 +1,36 @@
-import json
 from typing import List
 
-
-def get_tmps_list() -> List[str]:
-    # TODO: get template names from DB
-    tmp_names: List[str] = ["взыскание заработной платы", "восстановление на рабочем месте"]
-    return tmp_names
+from dotenv import dotenv_values
+from pymongo import MongoClient
 
 
-def get_regions_list() -> List[dict]:
-    # TODO: get regions from DB
-    with open("../../resources/regions.json") as f:
-        regions: List[dict] = json.load(f)
-        return regions
+class Repository:
+    def __init__(self):
+        self.config = dotenv_values(".env")
 
+    def _get_mongo_client(self):
+        return MongoClient(
+            host=self.config["MONGO_HOST"],
+            port=int(self.config["MONGO_PORT"]),
+            username=self.config["MONGO_INITDB_USERNAME"],
+            password=self.config["MONGO_INITDB_PASSWORD"],
+            authSource="claimant",
+            authMechanism='SCRAM-SHA-256'
+        )
 
-def get_region_code(post_code: str) -> str:
-    # TODO: get regions from DB
-    post_code_prefix: str = post_code[:3]
-    with open("../../resources/regions.json") as f:
-        regions: List[dict] = json.load(f)
-        code: int
-        for regin in regions:
-            if post_code_prefix in regin["post"]:
-                return regin["code"]
-        return "-1"
+    def get_tmps_list(self) -> List[str]:
+        with self._get_mongo_client() as client:
+            tmps: List[dict] = list(client["claimant"]["claim-tmps"].find({}, {"theme": 1, "_id": 0}))
+            return [tmp["theme"] for tmp in tmps]
+
+    def get_region_code(self, post_code: str) -> str:
+        post_code_prefix: str = post_code[:3]
+        with self._get_mongo_client() as client:
+            result = list(client["claimant"]["regions"].find({"post": post_code_prefix}))
+            if len(result) > 0:
+                return result[0]["code"]
+            return "-1"
+
+    def insert_item(self, collection_name: str, item: dict):
+        with self._get_mongo_client() as client:
+            client["claimant"][collection_name].insert_one(item)

@@ -7,7 +7,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 import aiogram.utils.markdown as fmt
 
-import repository
+from repository import Repository
 
 from common import CourtInfo, resolve_court_address
 
@@ -82,6 +82,7 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
 
     await state.update_data(apartment_chosen=apartment)
     user_data = await state.get_data()
+    repository: Repository = Repository()
     region_code: str = repository.get_region_code(user_data["user_post_code"])
     court_info: List[CourtInfo] = await resolve_court_address(city=user_data["chosen_city"],
                                                               court_subj=region_code, street=user_data["chosen_street"])

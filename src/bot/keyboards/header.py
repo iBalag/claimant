@@ -1,10 +1,11 @@
 from typing import List
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-import repository
+from repository import Repository
 
 
 def get_regions_list_kb() -> ReplyKeyboardMarkup:
+    repository: Repository = Repository()
     regions: List[dict] = repository.get_regions_list()
     regions_list_kb: ReplyKeyboardMarkup = ReplyKeyboardMarkup(resize_keyboard=True)
     for region in regions:

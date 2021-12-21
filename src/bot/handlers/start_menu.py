@@ -3,7 +3,7 @@ from typing import List
 from aiogram import types, Dispatcher, filters
 from aiogram.types import ReplyKeyboardMarkup
 
-import repository
+from repository import Repository
 from keyboards import get_start_menu_kb, get_claim_tmps_list_kb, get_claim_parts_kb, emojis
 
 
@@ -34,6 +34,7 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.left_arrow} к выбору\nчасти заявления"))
 
+    repository: Repository = Repository()
     tmp_names: List[str] = repository.get_tmps_list()
     tmp_regex: str = f"^{emojis.page_facing_up} ({'|'.join([tn for tn in tmp_names])})$"
     dp.register_message_handler(choose_claim_part, filters.Regexp(tmp_regex))

@@ -1,6 +1,6 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-import repository
+from repository import Repository
 from keyboards import emojis
 
 
@@ -13,6 +13,7 @@ def get_start_menu_kb() -> ReplyKeyboardMarkup:
 
 
 def get_claim_tmps_list_kb() -> ReplyKeyboardMarkup:
+    repository: Repository = Repository()
     tmp_names = repository.get_tmps_list()
     choose_claim_tmp_kb = ReplyKeyboardMarkup(resize_keyboard=True)
     for tmp_name in tmp_names:
