@@ -1,6 +1,6 @@
 from aiogram import executor, Dispatcher
 
-from handlers import start_menu, court_resolver
+from handlers import start_menu, head_part_handler
 from init_bot import dp
 
 
@@ -11,5 +11,5 @@ async def shutdown(dispatcher: Dispatcher):
 
 if __name__ == "__main__":
     start_menu.register_handlers(dp)
-    court_resolver.register_handlers(dp)
+    head_part_handler.register_handlers(dp)
     executor.start_polling(dp, skip_updates=True, on_shutdown=shutdown)

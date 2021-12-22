@@ -14,6 +14,7 @@ from common import CourtInfo, resolve_court_address
 
 
 class ResolveCourt(StatesGroup):
+    waiting_for_user_name = State()
     waiting_for_user_post_code = State()
     waiting_for_user_city = State()
     waiting_for_user_street = State()
@@ -28,12 +29,19 @@ class ResolveCourt(StatesGroup):
 
 async def header_start(message: types.Message):
     await message.reply("Для заполнения шапки заявления необходимо указать:\n"
-                        "- Наименование и адрес суда\n"
                         "- ФИО и адрес истца\n"
+                        "- Наименование и адрес суда\n"
                         "- Наименование и адрес ответчика\n")
     await message.answer("Внимание! Поиск подходящего суда будет происходить по адресу истца.")
-    await message.answer("Введите свой почтовый индекс", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Введите свои ФИО", reply_markup=ReplyKeyboardRemove())
+    await ResolveCourt.waiting_for_user_name.set()
+
+
+async def user_name_chosen(message: types.Message, state: FSMContext):
+    user_name: Optional[str] = message.text
+    await state.update_data(user_name=user_name)
     await ResolveCourt.waiting_for_user_post_code.set()
+    await message.answer("Введите свой почтовый индекс", reply_markup=ReplyKeyboardRemove())
 
 
 async def post_code_chosen(message: types.Message, state: FSMContext):
@@ -190,22 +198,22 @@ async def employer_address_chosen(message: types.Message, state: FSMContext):
     # await message.answer(f"Проверьте введенные данные: {user_data}")
     await message.answer("Данные раздела 'шапка' успешно заполнены.")
     user_id = message.from_user.id
-    claim_data = {
-        "user_id": user_id,
+    repository: Repository = Repository()
+    claim_data: Optional[dict] = repository.get_claim_data(user_id)
+    head_data: dict = {
         "claim_data": {
             "head": user_data
         }
     }
-    repository: Repository = Repository()
-    # TODO: check what there is no old info for the current user!!!
-    repository.insert_item("claim-data", claim_data)
+    repository.update_record("claim-data", claim_data["_id"], head_data)
     await state.finish()
     claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb()
     await message.answer("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(header_start, filters.Regexp("^/шапка$"))
+    dp.register_message_handler(header_start, filters.Regexp(f"^{emojis.top_hat} шапка$"))
+    dp.register_message_handler(user_name_chosen, state=ResolveCourt.waiting_for_user_name)
     dp.register_message_handler(post_code_chosen, state=ResolveCourt.waiting_for_user_post_code)
     dp.register_message_handler(city_chosen, state=ResolveCourt.waiting_for_user_city)
     dp.register_message_handler(street_chosen, state=ResolveCourt.waiting_for_user_street)
