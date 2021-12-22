@@ -13,7 +13,7 @@ from repository import Repository
 from common import CourtInfo, resolve_court_address
 
 
-class ResolveCourt(StatesGroup):
+class HeadPart(StatesGroup):
     waiting_for_user_name = State()
     waiting_for_user_post_code = State()
     waiting_for_user_city = State()
@@ -34,13 +34,13 @@ async def header_start(message: types.Message):
                         "- Наименование и адрес ответчика\n")
     await message.answer("Внимание! Поиск подходящего суда будет происходить по адресу истца.")
     await message.answer("Введите свои ФИО", reply_markup=ReplyKeyboardRemove())
-    await ResolveCourt.waiting_for_user_name.set()
+    await HeadPart.waiting_for_user_name.set()
 
 
 async def user_name_chosen(message: types.Message, state: FSMContext):
     user_name: Optional[str] = message.text
     await state.update_data(user_name=user_name)
-    await ResolveCourt.waiting_for_user_post_code.set()
+    await HeadPart.waiting_for_user_post_code.set()
     await message.answer("Введите свой почтовый индекс", reply_markup=ReplyKeyboardRemove())
 
 
@@ -50,7 +50,7 @@ async def post_code_chosen(message: types.Message, state: FSMContext):
     if re.match("\\d{6}", user_post_code) is None:
         await message.reply("Неверный индекс. Введите свой почтовый индекс", reply_markup=ReplyKeyboardRemove())
     await state.update_data(user_post_code=user_post_code)
-    await ResolveCourt.waiting_for_user_city.set()
+    await HeadPart.waiting_for_user_city.set()
     await message.reply("Спасибо, а теперь укажите свой город", reply_markup=ReplyKeyboardRemove())
 
 
@@ -58,7 +58,7 @@ async def city_chosen(message: types.Message, state: FSMContext):
     city: Optional[str] = message.text
     # TODO: Add checking for city value
     await state.update_data(chosen_city=city)
-    await ResolveCourt.waiting_for_user_street.set()
+    await HeadPart.waiting_for_user_street.set()
     # TODO: return keyboard with one button 'back'
     await message.reply("Принято товарищ! А теперь укажите название улицы, на которой вы прописаны",
                         reply_markup=ReplyKeyboardRemove())
@@ -67,7 +67,7 @@ async def city_chosen(message: types.Message, state: FSMContext):
 async def street_chosen(message: types.Message, state: FSMContext):
     street: Optional[str] = message.text
     await state.update_data(chosen_street=street)
-    await ResolveCourt.waiting_for_user_house.set()
+    await HeadPart.waiting_for_user_house.set()
     await message.reply("Принято товарищ! А теперь введи номер своего дома",
                         reply_markup=ReplyKeyboardRemove())
 
@@ -75,7 +75,7 @@ async def street_chosen(message: types.Message, state: FSMContext):
 async def house_chosen(message: types.Message, state: FSMContext):
     house: Optional[str] = message.text
     await state.update_data(house_chosen=house)
-    await ResolveCourt.waiting_for_user_apartment.set()
+    await HeadPart.waiting_for_user_apartment.set()
     await message.reply("Принято товарищ! А теперь введи номер своей квартиры. "
                         "Если ты живешь в частном доме, просто ответь: нет",
                         reply_markup=ReplyKeyboardRemove())
@@ -104,7 +104,7 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
         enter_court_btn = KeyboardButton(f"{emojis.face_with_monocle} указать суд самостоятельно")
         options_kb = ReplyKeyboardMarkup(resize_keyboard=True)
         options_kb.row(chose_another_city_btn, enter_court_btn)
-        await ResolveCourt.waiting_for_option_chosen.set()
+        await HeadPart.waiting_for_option_chosen.set()
         await message.reply(f"Для данного города '{user_data['chosen_city']}' и улицы '{user_data['chosen_street']}' "
                             f"не найдено суда. Пожалуйста, выберите одну из следующий опций:",
                             reply_markup=options_kb)
@@ -119,7 +119,7 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
             sep="\n"
         ), parse_mode="HTML")
         await state.update_data(chosen_court=court_info[0])
-        await ResolveCourt.waiting_for_employer_name.set()
+        await HeadPart.waiting_for_employer_name.set()
         await message.answer("Введите название организации, в которой вы работаете")
         return
 
@@ -132,7 +132,7 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
             sep="\n"
         ), parse_mode="HTML")
 
-    await ResolveCourt.waiting_for_court_chosen.set()
+    await HeadPart.waiting_for_court_chosen.set()
     court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
     await message.answer(f"Выберите подходящий суд для подачи заявления: "
                          f"{', '.join(court_options)}",
@@ -142,11 +142,11 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
 async def option_chosen(message: types.Message, state: FSMContext):
     option: Optional[str] = message.text
     if option.endswith("выбрать другой город"):
-        await ResolveCourt.waiting_for_user_city.set()
+        await HeadPart.waiting_for_user_city.set()
         await message.answer("Укажите свой город", reply_markup=ReplyKeyboardRemove())
         return
     if option.endswith("указать суд самостоятельно"):
-        await ResolveCourt.waiting_for_court_entered.set()
+        await HeadPart.waiting_for_court_entered.set()
         await message.answer("Укажите наименование и адрес суда. Например:\n"
                              "Фрунзенский районный суд г. Иваново, 153003, г. Иваново, ул. Мархлевского, д. 33",
                              reply_markup=ReplyKeyboardRemove())
@@ -161,7 +161,7 @@ async def court_entered(message: types.Message, state: FSMContext):
         address: str = f"{post_code[0]}, {court_info_agg[1]}"
         chosen_court: CourtInfo = CourtInfo(name=court_info_agg[0], address=address, note="")
         await state.update_data(chosen_court=chosen_court)
-        await ResolveCourt.waiting_for_employer_name.set()
+        await HeadPart.waiting_for_employer_name.set()
         await message.answer("Введите название организации, в которой вы работаете. Например: OOO \"Рога и Копыта\"")
 
 
@@ -178,14 +178,14 @@ async def court_chosen(message: types.Message, state: FSMContext):
 
     chosen_court: CourtInfo = user_data["court_info"][int(court_number_raw) - 1]
     await state.update_data(chosen_court=chosen_court)
-    await ResolveCourt.waiting_for_employer_name.set()
+    await HeadPart.waiting_for_employer_name.set()
     await message.answer("Введите название организации, в которой вы работаете. Например: OOO \"Рога и Копыта\"")
 
 
 async def employer_name_chosen(message: types.Message, state: FSMContext):
     employer_name: Optional[str] = message.text
     await state.update_data(chosen_employer_name=employer_name)
-    await ResolveCourt.waiting_for_employer_address.set()
+    await HeadPart.waiting_for_employer_address.set()
     await message.reply("Принято товарищ! А теперь введи адрес организации, в которой вы работаете. "
                         "Например: 101002, ул. Любая, д.4",
                         reply_markup=ReplyKeyboardRemove())
@@ -213,14 +213,14 @@ async def employer_address_chosen(message: types.Message, state: FSMContext):
 
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(header_start, filters.Regexp(f"^{emojis.top_hat} шапка$"))
-    dp.register_message_handler(user_name_chosen, state=ResolveCourt.waiting_for_user_name)
-    dp.register_message_handler(post_code_chosen, state=ResolveCourt.waiting_for_user_post_code)
-    dp.register_message_handler(city_chosen, state=ResolveCourt.waiting_for_user_city)
-    dp.register_message_handler(street_chosen, state=ResolveCourt.waiting_for_user_street)
-    dp.register_message_handler(house_chosen, state=ResolveCourt.waiting_for_user_house)
-    dp.register_message_handler(apartment_chosen, state=ResolveCourt.waiting_for_user_apartment)
-    dp.register_message_handler(option_chosen, state=ResolveCourt.waiting_for_option_chosen)
-    dp.register_message_handler(court_entered, state=ResolveCourt.waiting_for_court_entered)
-    dp.register_message_handler(court_chosen, state=ResolveCourt.waiting_for_court_chosen)
-    dp.register_message_handler(employer_name_chosen, state=ResolveCourt.waiting_for_employer_name)
-    dp.register_message_handler(employer_address_chosen, state=ResolveCourt.waiting_for_employer_address)
+    dp.register_message_handler(user_name_chosen, state=HeadPart.waiting_for_user_name)
+    dp.register_message_handler(post_code_chosen, state=HeadPart.waiting_for_user_post_code)
+    dp.register_message_handler(city_chosen, state=HeadPart.waiting_for_user_city)
+    dp.register_message_handler(street_chosen, state=HeadPart.waiting_for_user_street)
+    dp.register_message_handler(house_chosen, state=HeadPart.waiting_for_user_house)
+    dp.register_message_handler(apartment_chosen, state=HeadPart.waiting_for_user_apartment)
+    dp.register_message_handler(option_chosen, state=HeadPart.waiting_for_option_chosen)
+    dp.register_message_handler(court_entered, state=HeadPart.waiting_for_court_entered)
+    dp.register_message_handler(court_chosen, state=HeadPart.waiting_for_court_chosen)
+    dp.register_message_handler(employer_name_chosen, state=HeadPart.waiting_for_employer_name)
+    dp.register_message_handler(employer_address_chosen, state=HeadPart.waiting_for_employer_address)
