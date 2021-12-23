@@ -47,7 +47,7 @@ class Repository:
             find_filter.update(**{"claim_theme": claim_theme})
 
         with self._get_mongo_client() as client:
-            result = list(client["claimant"]["claim-data"].find(find_filter))
+            result = list(client[self.db_name]["claim-data"].find(find_filter))
             # there can be only one :)
             if len(result) == 1:
                 return result[0]
@@ -60,3 +60,22 @@ class Repository:
     def update_record(self, collection_name: str, item_id: ObjectId, new_value: dict):
         with self._get_mongo_client() as client:
             client[self.db_name][collection_name].update_one({"_id": item_id}, {"$set": new_value}, upsert=True)
+
+    def get_current_claim_theme(self, user_id: int) -> Optional[str]:
+        result = self.get_claim_data(user_id)
+        if result is not None:
+            return result["claim_theme"]
+        else:
+            return None
+
+    def get_claim_tmp(self, claim_theme: str) -> Optional[dict]:
+        with self._get_mongo_client() as client:
+            result = list(client[self.db_name]["claim-tmps"].find({"theme": claim_theme}))
+            # there can be only one :)
+            if len(result) == 1:
+                return result[0]
+            if len(result) == 0:
+                return None
+            if len(result) > 1:
+                # TODO: how to hande this? Take latest?
+                return result[0]
