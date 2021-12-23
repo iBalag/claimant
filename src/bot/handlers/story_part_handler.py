@@ -75,7 +75,7 @@ async def story_details_entered(message: types.Message, state: FSMContext):
     }
     repository.update_record("claim-data", claim_data["_id"], head_data)
     await state.finish()
-    claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb()
+    claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
     await message.answer("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
 
 

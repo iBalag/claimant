@@ -39,7 +39,7 @@ async def choose_claim_part(message: types.Message):
         "created": datetime.utcnow().replace(tzinfo=pytz.UTC)
     }
     repository.insert_item("claim-data", new_claim_data)
-    claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb()
+    claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
     await message.reply("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
 
 
