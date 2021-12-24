@@ -46,7 +46,7 @@ async def choose_claim_part(message: types.Message):
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start_menu, commands=["start"])
     dp.register_message_handler(start_menu, filters.Regexp(f"^{emojis.left_arrow} назад"))
-    dp.register_message_handler(show_bot_info, filters.Regexp(f"^{emojis.bookmark_tabs} информация$"))
+    dp.register_message_handler(show_bot_info, filters.Regexp(f"^{emojis.bookmark_tabs} узнать о боте$"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.left_arrow} к выбору\nчасти заявления"))
 

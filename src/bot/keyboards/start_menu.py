@@ -5,10 +5,10 @@ from keyboards import emojis
 
 
 def get_start_menu_kb() -> ReplyKeyboardMarkup:
-    info_btn = KeyboardButton(f"{emojis.bookmark_tabs} информация")
+    info_btn = KeyboardButton(f"{emojis.bookmark_tabs} узнать о боте")
     choose_claim_tmp_btn = KeyboardButton(f"{emojis.fist} выбор операции")
     start_menu_kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    start_menu_kb.row(info_btn, choose_claim_tmp_btn)
+    start_menu_kb.row(choose_claim_tmp_btn, info_btn)
     return start_menu_kb
 
 
