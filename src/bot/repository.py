@@ -79,3 +79,17 @@ class Repository:
             if len(result) > 1:
                 # TODO: how to hande this? Take latest?
                 return result[0]
+
+    def get_claim_tmp_examples(self, claim_theme: str, part: str) -> Optional[List[str]]:
+        claim_tmp: Optional[dict] = self.get_claim_tmp(claim_theme)
+        examples: Optional[List[str]] = None
+        if claim_tmp is not None and part in claim_tmp.keys() and "examples" in claim_tmp[part].keys():
+            examples = claim_tmp[part]["examples"]
+        return examples
+
+    def get_claim_tmp_options(self, claim_theme: str, part: str) -> Optional[List[str]]:
+        claim_tmp: Optional[dict] = self.get_claim_tmp(claim_theme)
+        options: Optional[List[str]] = None
+        if claim_tmp is not None and part in claim_tmp.keys() and "options" in claim_tmp[part].keys():
+            options = claim_tmp[part]["options"]
+        return options
