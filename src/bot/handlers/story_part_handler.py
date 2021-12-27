@@ -8,7 +8,7 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButt
 from keyboards import emojis, get_claim_parts_kb
 from repository import Repository
 
-example_btn = KeyboardButton(f"{emojis.speech_balloon} {emojis.red_question_mark} показать пример")
+example_btn = KeyboardButton(f"{emojis.red_question_mark} показать пример")
 example_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 example_kb.row(example_btn)
 
@@ -108,8 +108,8 @@ async def show_example(message: types.Message, state: FSMContext):
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(story_start, filters.Regexp(f"^{emojis.speech_balloon} фабула"))
     dp.register_message_handler(show_example,
-                                filters.Regexp(f"^{emojis.speech_balloon} {emojis.red_question_mark} показать пример"),
-                                state="*")
+                                filters.Regexp(f"^{emojis.red_question_mark} показать пример"),
+                                state=StoryPart.states)
     dp.register_message_handler(story_begin_entered, state=StoryPart.waiting_for_user_story_begin)
     dp.register_message_handler(story_conflict_entered, state=StoryPart.waiting_for_user_story_conflict)
     dp.register_message_handler(user_employer_discussion_entered, state=StoryPart.waiting_for_user_employer_discussion)
