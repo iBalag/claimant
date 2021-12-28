@@ -14,11 +14,10 @@ essence_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 essence_kb.row(example_btn, chose_option_btn)
 
 another_option_btn: KeyboardButton = KeyboardButton(f"{emojis.card_file_box} добавить еще из списка")
-enter_essence_btn: KeyboardButton = KeyboardButton(f"{emojis.pencil} ввести самостоятельно")
 compose_btn: KeyboardButton = KeyboardButton(f"{emojis.chequered_flag} закончить с сутью нарушения")
 next_actions_kb: ReplyKeyboardMarkup = ReplyKeyboardMarkup(resize_keyboard=True)
-next_actions_kb.add(another_option_btn) \
-    .add(enter_essence_btn) \
+next_actions_kb.add(example_btn) \
+    .add(another_option_btn) \
     .add(compose_btn)
 
 
@@ -41,10 +40,14 @@ async def show_example(message: types.Message, state: FSMContext):
     examples: Optional[List[str]] = repository.get_claim_tmp_examples(claim_theme, "essence")
     if examples is None or len(examples) == 0:
         await message.reply("Для данного шаблона не найдено примеров.")
+        await message.answer("Введите, почему вы считаете, что ваши права нарушают. "
+                             "Или выберите одну из следующий опций.")
         return
 
     for i, example in enumerate(examples):
         await message.reply(f"Пример №{i+1}: {example}")
+
+    await message.answer("Введите, почему вы считаете, что ваши права нарушают. Или выберите одну из следующий опций.")
 
 
 async def action_selected(message: types.Message, state: FSMContext):
@@ -52,38 +55,11 @@ async def action_selected(message: types.Message, state: FSMContext):
     if option.endswith("выбрать из списка") or option.endswith("добавить еще из списка"):
         await _process_option_selection(message)
         return
-    if option.endswith("ввести самостоятельно"):
-        await message.reply("Опишите суть нарушения. Введите, почему вы считаете, что ваши права нарушают.")
-        return
     if option.endswith("закончить с сутью нарушения"):
         await _process_essence_end(message, state)
         return
 
     await _process_manual_enter(message, state)
-
-
-async def _process_option_selection(message: types.Message):
-    repository: Repository = Repository()
-    claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
-    options: Optional[List[str]] = repository.get_claim_tmp_options(claim_theme, "essence")
-    if options is None or len(options) == 0:
-        await EssencePart.waiting_for_user_action.set()
-        kb = ReplyKeyboardMarkup(resize_keyboard=True)
-        kb.row(example_btn)
-        await message.reply("Для данного шаблона не найдено опций для выбора. "
-                            "Введите суть нарушения самостоятельно", reply_markup=kb)
-        return
-
-    buttons = []
-    for i, example in enumerate(options):
-        option_btn: KeyboardButton = KeyboardButton(f"{i + 1}")
-        buttons.append(option_btn)
-        await message.answer(f"№{i + 1}: {example}")
-
-    option_kb: ReplyKeyboardMarkup = ReplyKeyboardMarkup(resize_keyboard=True)
-    option_kb.row(*buttons)
-    await EssencePart.waiting_for_option_chosen.set()
-    await message.answer("Выберите одну из опций с помощью клавиатуры.", reply_markup=option_kb)
 
 
 async def option_chosen(message: types.Message, state: FSMContext):
@@ -111,7 +87,33 @@ async def option_chosen(message: types.Message, state: FSMContext):
     await message.answer("Опциональный вариант добавлен к сути нарушения.")
 
     await EssencePart.waiting_for_user_action.set()
-    await message.answer("Выберите дальнейшее действие с помощью клавиатуры", reply_markup=next_actions_kb)
+    await message.answer("Введите, почему вы считаете, что ваши права нарушают. "
+                         "Или выберите дальнейшее действие с помощью клавиатуры",
+                         reply_markup=next_actions_kb)
+
+
+async def _process_option_selection(message: types.Message):
+    repository: Repository = Repository()
+    claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
+    options: Optional[List[str]] = repository.get_claim_tmp_options(claim_theme, "essence")
+    if options is None or len(options) == 0:
+        await EssencePart.waiting_for_user_action.set()
+        kb = ReplyKeyboardMarkup(resize_keyboard=True)
+        kb.row(example_btn)
+        await message.reply("Для данного шаблона не найдено опций для выбора. "
+                            "Введите суть нарушения самостоятельно", reply_markup=kb)
+        return
+
+    buttons = []
+    for i, example in enumerate(options):
+        option_btn: KeyboardButton = KeyboardButton(f"{i + 1}")
+        buttons.append(option_btn)
+        await message.answer(f"№{i + 1}: {example}")
+
+    option_kb: ReplyKeyboardMarkup = ReplyKeyboardMarkup(resize_keyboard=True)
+    option_kb.row(*buttons)
+    await EssencePart.waiting_for_option_chosen.set()
+    await message.answer("Выберите одну из опций с помощью клавиатуры.", reply_markup=option_kb)
 
 
 async def _process_manual_enter(message: types.Message, state: FSMContext):
@@ -126,7 +128,9 @@ async def _process_manual_enter(message: types.Message, state: FSMContext):
     await state.update_data(chosen_options=chosen_options)
     await message.answer("Свой вариант добавлен к сути нарушения.")
     await EssencePart.waiting_for_user_action.set()
-    await message.answer("Выберите дальнейшее действие с помощью клавиатуры", reply_markup=next_actions_kb)
+    await message.answer("Введите, почему вы считаете, что ваши права нарушают. "
+                         "Или выберите дальнейшее действие с помощью клавиатуры",
+                         reply_markup=next_actions_kb)
 
 
 async def _process_essence_end(message: types.Message, state: FSMContext):
