@@ -135,12 +135,10 @@ async def _process_essence_end(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     repository: Repository = Repository()
     claim_data: Optional[dict] = repository.get_claim_data(user_id)
-    head_data: dict = {
-        "claim_data": {
-            "essence": user_data
-        }
+    essence_data: dict = {
+        "claim_data.essence": user_data
     }
-    repository.update_record("claim-data", claim_data["_id"], head_data)
+    repository.update_record("claim-data", claim_data["_id"], essence_data)
     await state.finish()
     claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
     await message.answer("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)

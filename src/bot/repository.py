@@ -59,7 +59,7 @@ class Repository:
 
     def update_record(self, collection_name: str, item_id: ObjectId, new_value: dict):
         with self._get_mongo_client() as client:
-            client[self.db_name][collection_name].update_one({"_id": item_id}, {"$set": new_value}, upsert=True)
+            client[self.db_name][collection_name].update_one({"_id": item_id}, {"$set": new_value}, upsert=False)
 
     def get_current_claim_theme(self, user_id: int) -> Optional[str]:
         result = self.get_claim_data(user_id)

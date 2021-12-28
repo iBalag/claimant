@@ -201,9 +201,7 @@ async def employer_address_chosen(message: types.Message, state: FSMContext):
     repository: Repository = Repository()
     claim_data: Optional[dict] = repository.get_claim_data(user_id)
     head_data: dict = {
-        "claim_data": {
-            "head": user_data
-        }
+        "claim_data.head": user_data
     }
     repository.update_record("claim-data", claim_data["_id"], head_data)
     await state.finish()
