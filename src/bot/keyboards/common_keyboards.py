@@ -19,4 +19,4 @@ def get_next_actions_kb() -> ReplyKeyboardMarkup:
     next_actions_kb.add(example_btn) \
         .add(another_option_btn) \
         .add(compose_btn)
-    return  next_actions_kb
+    return next_actions_kb

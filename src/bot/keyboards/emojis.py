@@ -15,3 +15,8 @@ pencil: str = "\U0000270F"
 chequered_flag: str = "\U0001F3C1"
 key: str = "\U0001F511"
 page_with_curl: str = "\U0001F4C3"
+open_book: str = "\U0001F4D6"
+index_pointing_up: str = "\U0000261D"
+card_index_dividers: str = "\U0001F5C2"
+inbox_tray: str = "\U0001F4E5"
+

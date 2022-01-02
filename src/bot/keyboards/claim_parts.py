@@ -13,10 +13,11 @@ def get_claim_parts_kb(user_id: int) -> ReplyKeyboardMarkup:
         .add(KeyboardButton(f"{emojis.speech_balloon} фабула {emojis.check_mark if parts_status['story'] is True else ''}")) \
         .add(KeyboardButton(f"{emojis.key} суть нарушения {emojis.check_mark if parts_status['essence'] is True else ''}")) \
         .add(KeyboardButton(f"{emojis.page_with_curl} доказательства {emojis.check_mark if parts_status['proofs'] is True else ''}")) \
-        .add(KeyboardButton(f"/нормативное обоснование {emojis.check_mark if parts_status['law'] is True else ''}")) \
-        .add(KeyboardButton(f"/требования {emojis.check_mark if parts_status['claims'] is True else ''}")) \
-        .add(KeyboardButton(f"/приложения {emojis.check_mark if parts_status['additions'] is True else ''}")) \
-        .add(KeyboardButton("/назад"))
+        .add(KeyboardButton(f"{emojis.index_pointing_up} требования {emojis.check_mark if parts_status['claims'] is True else ''}")) \
+        .add(KeyboardButton(f"{emojis.card_index_dividers} приложения {emojis.check_mark if parts_status['additions'] is True else ''}"))
+
+    claim_parts_kb.row(*[KeyboardButton(f"{emojis.left_arrow} к шаблонам"),
+                         KeyboardButton(f"{emojis.inbox_tray} получить")])
     return claim_parts_kb
 
 

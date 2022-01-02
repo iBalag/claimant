@@ -1,6 +1,7 @@
 from aiogram import executor, Dispatcher
 
-from handlers import start_menu, head_part_handler, story_part_handler, essence_part_handler, proofs_part_handler
+from handlers import start_menu, head_part_handler, story_part_handler, essence_part_handler, proofs_part_handler, \
+    claims_part_handler, additions_part_handler
 from init_bot import dp
 
 
@@ -15,4 +16,6 @@ if __name__ == "__main__":
     story_part_handler.register_handlers(dp)
     essence_part_handler.register_handlers(dp)
     proofs_part_handler.register_handlers(dp)
+    claims_part_handler.register_handlers(dp)
+    additions_part_handler.register_handlers(dp)
     executor.start_polling(dp, skip_updates=True, on_shutdown=shutdown)

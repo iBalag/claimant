@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from aiogram import types, Dispatcher, filters
 from aiogram.dispatcher import FSMContext
@@ -8,7 +8,6 @@ from aiogram.types import ReplyKeyboardMarkup
 from handlers.common_actions_handlers import process_manual_enter, process_option_selection, \
     process_complete_part_editing, claim_tmp_option_chosen, show_claim_tmp_example
 from keyboards import emojis, get_common_start_kb
-from repository import Repository
 
 CLAIM_PART: str = "essence"
 
