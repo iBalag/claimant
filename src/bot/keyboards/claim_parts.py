@@ -5,6 +5,9 @@ from keyboards import emojis
 from repository import Repository
 
 
+PART_NAMES: List[str] = ["head", "story", "essence", "proofs", "claims", "additions"]
+
+
 def get_claim_parts_kb(user_id: int) -> ReplyKeyboardMarkup:
     parts_status: dict = get_claim_parts_status(user_id)
     claim_parts_kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -24,11 +27,10 @@ def get_claim_parts_kb(user_id: int) -> ReplyKeyboardMarkup:
 def get_claim_parts_status(user_id: int) -> dict:
     repository: Repository = Repository()
     claim_data: dict = repository.get_claim_data(user_id)
-    part_names: List[str] = ["head", "story", "essence", "proofs", "law", "claims", "additions"]
     if "claim_data" not in claim_data.keys():
-        return {pn: False for pn in part_names}
+        return {pn: False for pn in PART_NAMES}
     parts_status: dict = {}
-    for part_name in part_names:
+    for part_name in PART_NAMES:
         if part_name in claim_data["claim_data"].keys():
             parts_status.update(**{part_name: True})
         else:
