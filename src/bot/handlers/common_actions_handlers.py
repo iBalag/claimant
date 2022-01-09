@@ -74,17 +74,21 @@ async def claim_tmp_option_chosen(message: types.Message, state: FSMContext, cla
 
     chosen_option: str = options[int(chosen_option_raw) - 1]
     user_data = await state.get_data()
-    # TODO: process duplicates
     chosen_options: List[str]
     if "chosen_options" in user_data.keys():
         chosen_options = user_data["chosen_options"]
-        chosen_options.append(chosen_option)
+        if chosen_option not in chosen_options:
+            chosen_options.append(chosen_option)
+            await message.answer("Опциональный вариант добавлен к сути нарушения.")
+        else:
+            await message.reply("Данная опция уже была добавлена ранее.")
     else:
         chosen_options = [chosen_option]
-    await state.update_data(chosen_options=chosen_options)
-    await message.answer("Опциональный вариант добавлен к сути нарушения.")
+        await message.answer("Опциональный вариант добавлен к сути нарушения.")
 
+    await state.update_data(chosen_options=chosen_options)
     await state_groups.waiting_for_user_action.set()
+
     next_actions_kb: ReplyKeyboardMarkup = get_next_actions_kb()
     await message.answer("Введите свой вариант самостоятельно. "
                          "Или выберите дальнейшее действие с помощью клавиатуры",

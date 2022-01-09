@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import Optional
 
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import filters
@@ -27,6 +28,11 @@ async def download_doc(message: types.Message):
         await message.answer_document(document=claim_doc_file,
                                       disable_content_type_detection=True,
                                       reply_markup=ReplyKeyboardRemove())
+
+    # remove data from db
+    previous_claim_data: Optional[dict] = repository.get_claim_data(message.from_user.id, claim_data["claim_theme"])
+    if previous_claim_data is not None:
+        repository.remove_item("claim-data", previous_claim_data["_id"])
 
 
 def register_handlers(dp: Dispatcher):

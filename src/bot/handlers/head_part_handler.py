@@ -98,8 +98,6 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
     court_info: List[CourtInfo] = await resolve_court_address(city=user_data["chosen_city"],
                                                               court_subj=region_code, street=user_data["chosen_street"])
     if len(court_info) == 0:
-        # TODO: provide user ability to enter court info by himself
-        # await ResolveCourt.waiting_for_user_city.set()
         chose_another_city_btn = KeyboardButton(f"{emojis.compass} выбрать другой город")
         enter_court_btn = KeyboardButton(f"{emojis.face_with_monocle} указать суд самостоятельно")
         options_kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -187,7 +185,7 @@ async def employer_name_chosen(message: types.Message, state: FSMContext):
     await state.update_data(chosen_employer_name=employer_name)
     await HeadPart.waiting_for_employer_address.set()
     await message.reply("Принято товарищ! А теперь введи адрес организации, в которой вы работаете. "
-                        "Например: 101002, ул. Любая, д.4",
+                        "Например: 101002, г. Любой, ул. Любая, д.4",
                         reply_markup=ReplyKeyboardRemove())
 
 
@@ -195,7 +193,7 @@ async def employer_address_chosen(message: types.Message, state: FSMContext):
     employer_address: Optional[str] = message.text
     await state.update_data(chosen_employer_address=employer_address)
     user_data = await state.get_data()
-    # await message.answer(f"Проверьте введенные данные: {user_data}")
+    # TODO: print entered data for checking?
     await message.answer("Данные раздела 'шапка' успешно заполнены.")
     user_id = message.from_user.id
     repository: Repository = Repository()
