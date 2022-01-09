@@ -5,6 +5,5 @@ aiogram
 python-dotenv
 pymongo
 pytz
-defusedxml
+aioredis
 python-docx
-htmldocx
