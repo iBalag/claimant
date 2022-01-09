@@ -4,10 +4,16 @@ from bson import ObjectId
 from dotenv import dotenv_values
 from pymongo import MongoClient
 
+import bot_config
+
 
 class Repository:
     def __init__(self):
-        self.config = dotenv_values(".env")
+        if bot_config.ENV == "prod":
+            self.config = dotenv_values(".env")
+        if bot_config.ENV == "dev":
+            self.config = dotenv_values(".env-dev")
+
         self.db_name: str = self.config["MONGO_INITDB_DATABASE"]
 
     def _get_mongo_client(self):
@@ -17,7 +23,7 @@ class Repository:
             username=self.config["MONGO_INITDB_USERNAME"],
             password=self.config["MONGO_INITDB_PASSWORD"],
             authSource=self.db_name,
-            authMechanism='SCRAM-SHA-256'
+            authMechanism="SCRAM-SHA-256"
         )
 
     def get_tmps_list(self) -> List[str]:
