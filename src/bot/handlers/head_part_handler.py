@@ -4,7 +4,8 @@ from typing import List, Optional
 from aiogram import types, Dispatcher, filters
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton, InlineKeyboardMarkup, \
+    InlineKeyboardButton
 import aiogram.utils.markdown as fmt
 
 from keyboards import emojis, get_claim_parts_kb
@@ -131,10 +132,17 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
         ), parse_mode="HTML")
 
     await HeadPart.waiting_for_court_chosen.set()
-    court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
-    await message.answer(f"Выберите подходящий суд для подачи заявления: "
-                         f"{', '.join(court_options)}",
-                         reply_markup=ReplyKeyboardRemove())
+    # court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
+    # await message.answer(f"Выберите подходящий суд для подачи заявления: "
+    #                      f"{', '.join(court_options)}",
+    #                      reply_markup=ReplyKeyboardRemove())
+
+    court_options_kb = InlineKeyboardMarkup()
+    for i in range(len(court_info)):
+        option_btn = InlineKeyboardButton(f"{i + 1}", callback_data=f"option {i}")
+        court_options_kb.insert(option_btn)
+
+    await message.answer(f"Выберите подходящий суд для подачи заявления:", reply_markup=court_options_kb)
 
 
 async def option_chosen(message: types.Message, state: FSMContext):
@@ -163,21 +171,16 @@ async def court_entered(message: types.Message, state: FSMContext):
         await message.answer("Введите название организации, в которой вы работаете. Например: OOO \"Рога и Копыта\"")
 
 
-async def court_chosen(message: types.Message, state: FSMContext):
+async def court_chosen(callback_query: types.CallbackQuery, state: FSMContext):
+    chosen_option_index: int = int(callback_query.data.split(" ")[1])
     user_data = await state.get_data()
-    court_info: List[CourtInfo] = user_data['court_info']
-    court_number_raw: Optional[str] = message.text
-    if court_number_raw is None or not court_number_raw.isdigit() \
-            or int(court_number_raw) not in list(range(len(court_info)+1)):
-        court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
-        await message.reply(f"Выберите подходящий суд для подачи заявления: {', '.join(court_options)}",
-                            reply_markup=ReplyKeyboardRemove())
-        return
-
-    chosen_court: CourtInfo = user_data["court_info"][int(court_number_raw) - 1]
+    court_info: List[CourtInfo] = user_data["court_info"]
+    chosen_court: CourtInfo = court_info[chosen_option_index]
+    await callback_query.answer(text=f"Суд '{chosen_court.name}' выбран.", show_alert=True)
     await state.update_data(chosen_court=chosen_court)
     await HeadPart.waiting_for_employer_name.set()
-    await message.answer("Введите название организации, в которой вы работаете. Например: OOO \"Рога и Копыта\"")
+    await callback_query.message.answer("Введите название организации, в которой вы работаете. "
+                                        "Например: OOO \"Рога и Копыта\"")
 
 
 async def employer_name_chosen(message: types.Message, state: FSMContext):
@@ -217,6 +220,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(apartment_chosen, state=HeadPart.waiting_for_user_apartment)
     dp.register_message_handler(option_chosen, state=HeadPart.waiting_for_option_chosen)
     dp.register_message_handler(court_entered, state=HeadPart.waiting_for_court_entered)
-    dp.register_message_handler(court_chosen, state=HeadPart.waiting_for_court_chosen)
+    dp.register_callback_query_handler(
+        court_chosen,
+        filters.Text(startswith="option"),
+        state=HeadPart.waiting_for_court_chosen
+    )
     dp.register_message_handler(employer_name_chosen, state=HeadPart.waiting_for_employer_name)
     dp.register_message_handler(employer_address_chosen, state=HeadPart.waiting_for_employer_address)
