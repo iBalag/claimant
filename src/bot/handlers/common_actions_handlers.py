@@ -2,9 +2,10 @@ from typing import List, Optional
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, \
+    InlineKeyboardMarkup
 
-from keyboards import get_next_actions_kb, example_btn, get_claim_parts_kb
+from keyboards import get_next_actions_kb, example_btn, get_claim_parts_kb, emojis
 from repository import Repository
 
 TERM_DISPLAY_NAME_MAP: dict = {
@@ -47,68 +48,58 @@ async def process_option_selection(message: types.Message, claim_part: str, stat
                             "Введите свой вариант", reply_markup=kb)
         return
 
-    buttons = []
-    for i, example in enumerate(options):
-        option_btn: KeyboardButton = KeyboardButton(f"{i + 1}")
-        buttons.append(option_btn)
-        await message.answer(f"№{i + 1}: {example}")
+    options_kb = InlineKeyboardMarkup()
+    options_text = []
+    for i, option in enumerate(options):
+        options_text.append(f"{i+1}. {option}")
+        option_btn = InlineKeyboardButton(f"{i+1}", callback_data=f"option {i}")
+        options_kb.insert(option_btn)
+    options_kb.add(InlineKeyboardButton(f"{emojis.chequered_flag} завершить выбор опций",
+                                        callback_data="complete options"))
 
-    option_kb: ReplyKeyboardMarkup = ReplyKeyboardMarkup(resize_keyboard=True)
-    option_kb.row(*buttons)
     await state_groups.waiting_for_option_chosen.set()
-    await message.answer("Выберите одну из опций с помощью клавиатуры.", reply_markup=option_kb)
+    await message.answer("Выберите одну из опций:")
+    await message.answer("\n".join(options_text), reply_markup=options_kb)
 
 
-async def claim_tmp_option_chosen(message: types.Message, state: FSMContext, claim_part: str, state_groups):
-    chosen_option_raw: Optional[str] = message.text
+async def claim_tmp_option_chosen(callback_query: types.CallbackQuery, state: FSMContext, claim_part: str):
+    chosen_option_index: int = int(callback_query.data.split(" ")[1])
     repository: Repository = Repository()
-    claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
+    claim_theme: Optional[str] = repository.get_current_claim_theme(callback_query.from_user.id)
     options: Optional[List[str]] = repository.get_claim_tmp_options(claim_theme, claim_part)
-    if chosen_option_raw is None or not chosen_option_raw.isdigit() \
-            or int(chosen_option_raw) not in list(range(len(options) + 1)):
-        buttons = [KeyboardButton(f"{i + 1}") for i in range(len(options))]
-        option_kb: ReplyKeyboardMarkup = ReplyKeyboardMarkup(resize_keyboard=True)
-        option_kb.row(buttons)
-        await message.answer("Выберите одну из опций с помощью клавиатуры.")
-        return
+    chosen_option: str = options[chosen_option_index]
 
-    chosen_option: str = options[int(chosen_option_raw) - 1]
     user_data = await state.get_data()
     chosen_options: List[str]
     if "chosen_options" in user_data.keys():
         chosen_options = user_data["chosen_options"]
         if chosen_option not in chosen_options:
             chosen_options.append(chosen_option)
-            await message.answer("Опциональный вариант добавлен к сути нарушения.")
+            await callback_query.answer(text="Опциональный вариант успешно добавлен.", show_alert=True)
         else:
-            await message.reply("Данная опция уже была добавлена ранее.")
+            await callback_query.answer(text="Данная опция уже была добавлена ранее.", show_alert=True)
     else:
         chosen_options = [chosen_option]
-        await message.answer("Опциональный вариант добавлен к сути нарушения.")
+        await callback_query.answer(text="Опциональный вариант успешно добавлен.", show_alert=True)
 
     await state.update_data(chosen_options=chosen_options)
-    await state_groups.waiting_for_user_action.set()
-
-    next_actions_kb: ReplyKeyboardMarkup = get_next_actions_kb()
-    await message.answer("Введите свой вариант самостоятельно. "
-                         "Или выберите дальнейшее действие с помощью клавиатуры",
-                         reply_markup=next_actions_kb)
 
 
 async def show_claim_tmp_example(message: types.Message, claim_part):
     repository: Repository = Repository()
     claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
     examples: Optional[List[str]] = repository.get_claim_tmp_examples(claim_theme, claim_part)
+    next_actions_kb: ReplyKeyboardMarkup = get_next_actions_kb()
     if examples is None or len(examples) == 0:
         await message.reply("Для данной части примеров не найдено.")
         await message.answer("Введите свой вариант самостоятельно. "
-                             "Или выберите дальнейшее действие с помощью клавиатуры",)
+                             "Или выберите дальнейшее действие с помощью клавиатуры",
+                             reply_markup=next_actions_kb)
         return
 
     for i, example in enumerate(examples):
         await message.reply(f"Пример №{i+1}: {example}")
 
-    next_actions_kb: ReplyKeyboardMarkup = get_next_actions_kb()
     await message.answer("Введите свой вариант самостоятельно. "
                          "Или выберите дальнейшее действие с помощью клавиатуры",
                          reply_markup=next_actions_kb)

@@ -7,8 +7,7 @@ from aiogram.types import ReplyKeyboardMarkup
 
 from handlers.common_actions_handlers import process_option_selection, process_complete_part_editing, \
     process_manual_enter, claim_tmp_option_chosen, show_claim_tmp_example
-from keyboards import emojis, get_common_start_kb
-
+from keyboards import emojis, get_common_start_kb, get_next_actions_kb
 
 CLAIM_PART: str = "proofs"
 
@@ -42,8 +41,17 @@ async def action_selected(message: types.Message, state: FSMContext):
     await process_manual_enter(message, state, ProofsPart)
 
 
-async def option_chosen(message: types.Message, state: FSMContext):
-    await claim_tmp_option_chosen(message, state, CLAIM_PART, ProofsPart)
+async def option_chosen(callback_query: types.CallbackQuery, state: FSMContext):
+    await claim_tmp_option_chosen(callback_query, state, CLAIM_PART)
+
+
+async def finish_option_choosing(callback_query: types.CallbackQuery):
+    await callback_query.answer()
+    await ProofsPart.waiting_for_user_action.set()
+    next_actions_kb: ReplyKeyboardMarkup = get_next_actions_kb()
+    await callback_query.message.answer("Введите свой вариант самостоятельно. "
+                                        "Или выберите дальнейшее действие с помощью клавиатуры",
+                                        reply_markup=next_actions_kb)
 
 
 def register_handlers(dp: Dispatcher):
@@ -52,4 +60,12 @@ def register_handlers(dp: Dispatcher):
                                 filters.Regexp(f"^{emojis.red_question_mark} показать пример"),
                                 state=ProofsPart.states)
     dp.register_message_handler(action_selected, state=ProofsPart.waiting_for_user_action)
-    dp.register_message_handler(option_chosen, filters.Regexp(f"^\\d+"), state=ProofsPart.waiting_for_option_chosen)
+    dp.register_callback_query_handler(
+        option_chosen,
+        filters.Text(startswith="option"),
+        state=ProofsPart.waiting_for_option_chosen
+    )
+
+    dp.register_callback_query_handler(finish_option_choosing,
+                                       filters.Text(equals="complete options"),
+                                       state=ProofsPart.waiting_for_option_chosen)
