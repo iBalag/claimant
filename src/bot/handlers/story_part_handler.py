@@ -5,6 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 
+from common import telegram_calendar
 from keyboards import emojis, get_claim_parts_kb
 from repository import Repository
 
@@ -14,23 +15,41 @@ example_kb.row(example_btn)
 
 
 class StoryPart(StatesGroup):
-    waiting_for_user_story_begin = State()
+    waiting_for_start_work_date = State()
+    waiting_for_user_position = State()
+    waiting_for_user_salary = State()
     waiting_for_user_story_conflict = State()
     waiting_for_user_employer_discussion = State()
     waiting_for_user_story_details = State()
 
 
 async def story_start(message: types.Message):
-    await StoryPart.waiting_for_user_story_begin.set()
-    await message.reply("Для заполнения фабулы опишите ситуацию в хронологическом порядке.\n"
-                        "Для начала напишите с какого и по какое время вы работали\\работаете в компании "
-                        "и на какой должности.",
-                        reply_markup=example_kb)
+    await StoryPart.waiting_for_start_work_date.set()
+    calendar_kb = telegram_calendar.create_calendar()
+    await message.reply("Для заполнения фабулы для начала укажите дату с которой вы работали\\работаете в компании.",
+                        reply_markup=calendar_kb)
 
 
-async def story_begin_entered(message: types.Message, state: FSMContext):
-    story_begin: Optional[str] = message.text
-    await state.update_data(story_begin=story_begin)
+async def start_work_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
+    is_date, start_work_date = await telegram_calendar.process_calendar_selection(callback_query)
+    if is_date:
+        await state.update_data(start_work_date=start_work_date)
+        await StoryPart.waiting_for_user_position.set()
+        await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
+                                            "Можно посмотреть в трудовой книжке или трудовом договоре.",
+                                            reply_markup=example_kb)
+
+
+async def user_position_entered(message: types.Message, state: FSMContext):
+    user_position: Optional[str] = message.text
+    await state.update_data(user_position=user_position)
+    await StoryPart.waiting_for_user_salary.set()
+    await message.answer("Укажите, какой у вас был оклад.", reply_markup=example_kb)
+
+
+async def user_salary_entered(message: types.Message, state: FSMContext):
+    user_salary: Optional[str] = message.text
+    await state.update_data(user_salary=user_salary)
     await StoryPart.waiting_for_user_story_conflict.set()
     await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
 
@@ -40,16 +59,19 @@ async def story_conflict_entered(message: types.Message, state: FSMContext):
     await state.update_data(story_conflict=story_conflict)
     await StoryPart.waiting_for_user_employer_discussion.set()
     await message.answer("Дальше опишите ваше общение с работодателем: как развивался конфликт, "
-                         "какие действия совершали вы и работодатель.", reply_markup=example_kb)
+                         "какие действия совершали вы и работодатель. "
+                         "Если добавить нечего - просто напишите 'нет'.", reply_markup=example_kb)
 
 
 async def user_employer_discussion_entered(message: types.Message, state: FSMContext):
     user_employer_discussion: Optional[str] = message.text
+    if user_employer_discussion is None or user_employer_discussion.lower() == "нет":
+        user_employer_discussion = ""
     await state.update_data(user_employer_discussion=user_employer_discussion)
     await StoryPart.waiting_for_user_story_details.set()
     await message.answer("Если считаете важным, добавьте детали, например, что в этот момент "
                          "происходило в компании, как реагировали ваши коллеги. "
-                         "Если добавить нечего - просто напишите 'нет'", reply_markup=example_kb)
+                         "Если добавить нечего - просто напишите 'нет'.", reply_markup=example_kb)
 
 
 async def story_details_entered(message: types.Message, state: FSMContext):
@@ -86,7 +108,7 @@ async def show_example(message: types.Message, state: FSMContext):
 
     current_state: Optional[str] = await state.get_state()
     example_index: Optional[int] = None
-    if current_state == StoryPart.waiting_for_user_story_begin.state:
+    if current_state == StoryPart.waiting_for_user_position.state:
         example_index = 0
     if current_state == StoryPart.waiting_for_user_story_conflict.state:
         example_index = 1
@@ -108,8 +130,12 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(show_example,
                                 filters.Regexp(f"^{emojis.red_question_mark} показать пример"),
                                 state=StoryPart.states)
-    dp.register_message_handler(story_begin_entered, state=StoryPart.waiting_for_user_story_begin)
+    dp.register_callback_query_handler(start_work_date_entered, state=StoryPart.waiting_for_start_work_date)
+    dp.register_message_handler(user_position_entered, state=StoryPart.waiting_for_user_position)
+    dp.register_message_handler(user_salary_entered, state=StoryPart.waiting_for_user_salary)
     dp.register_message_handler(story_conflict_entered, state=StoryPart.waiting_for_user_story_conflict)
     dp.register_message_handler(user_employer_discussion_entered, state=StoryPart.waiting_for_user_employer_discussion)
     dp.register_message_handler(story_details_entered, state=StoryPart.waiting_for_user_story_details)
+
+
 
