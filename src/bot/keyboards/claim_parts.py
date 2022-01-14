@@ -10,7 +10,7 @@ PART_NAMES: List[str] = ["head", "story", "essence", "proofs", "claims", "additi
 
 def get_claim_parts_kb(user_id: int) -> ReplyKeyboardMarkup:
     parts_status: dict = get_claim_parts_status(user_id)
-    claim_parts_kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    claim_parts_kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     claim_parts_kb\
         .add(KeyboardButton(f"{emojis.top_hat} шапка {emojis.check_mark if parts_status['head'] is True else ''}")) \
         .add(KeyboardButton(f"{emojis.speech_balloon} фабула {emojis.check_mark if parts_status['story'] is True else ''}")) \

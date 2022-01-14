@@ -19,10 +19,12 @@ class ClaimsPart(StatesGroup):
 async def claims_start(message: types.Message):
     # Show main claims
     repository: Repository = Repository()
+    claim_data: dict = repository.get_claim_data(message.from_user.id)
     claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
     options: Optional[List[str]] = repository.get_claim_tmp_options(claim_theme, CLAIM_PART)
     await message.reply(f"Основные требования для темы '{claim_theme}':", reply_markup=ReplyKeyboardRemove())
     for i, option in enumerate(options):
+        option = fill_details(option, claim_data["claim_data"])
         await message.answer(f"{i+1}. {option}")
 
     # TODO: Add support of optional claim from list
@@ -44,6 +46,15 @@ async def optional_claim_selected(message: types.Message, state: FSMContext):
         await state.update_data(claims=options)
 
     await process_complete_part_editing(message, state, CLAIM_PART)
+
+
+def fill_details(option: str, claim_data: dict) -> str:
+    placeholders: dict = {
+        "defendant": claim_data["head"]["chosen_employer_name"],
+        "position": claim_data["story"]["user_position"]
+    }
+
+    return option.format(**placeholders)
 
 
 def register_handlers(dp: Dispatcher):
