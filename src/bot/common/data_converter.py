@@ -30,13 +30,10 @@ def convert_to_doc(data: dict) -> Document:
     theme.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
     # story
-    story_parts: List[str] = ["story_begin", "story_conflict", "user_employer_discussion", "story_details"]
+    story_parts: List[str] = get_story_parts(data["claim_data"])
     for story_part in story_parts:
-        story_text: str = data["claim_data"]["story"][story_part]
-        if story_text == "":
-            continue
         story_paragraph: Paragraph = claim_doc.add_paragraph()
-        story_paragraph.text = story_text
+        story_paragraph.text = story_part
         story_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
         story_paragraph.paragraph_format.first_line_indent = Inches(0.5)
 
@@ -50,7 +47,7 @@ def convert_to_doc(data: dict) -> Document:
     # proofs
     proofs: Paragraph = claim_doc.add_paragraph()
     proofs_data: List[str] = data["claim_data"]["proofs"]["chosen_options"]
-    proofs.text = f"В качестве доказательств нарушения своих прав я предоставляю: {', '.join(proofs_data)}"
+    proofs.text = f"В качестве доказательств нарушения своих прав я предоставляю: {', '.join(proofs_data)}."
     proofs.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
     proofs.paragraph_format.first_line_indent = Inches(0.5)
 
@@ -99,11 +96,30 @@ def get_head_text(head_data: dict) -> str:
         f"ул. {head_data['chosen_street']}, д. {head_data['house_chosen']}"
         f"{', кв. ' + head_data['apartment_chosen'] if head_data.get('apartment_chosen') is not None else ''}",
         "",
-        f"Ответчик: {head_data['chosen_employer_name']}",
+        f"Ответчик: {head_data['chosen_employer_name']}" +
+        f" (ИНН {head_data['inn']})" if head_data.get("inn") is not None else '',
         f"Адрес: {head_data['chosen_employer_address']}"
     ]
 
     return '\n'.join(lines)
+
+
+def get_story_parts(data: dict) -> List[str]:
+    full_employer_name: str = data["head"]["chosen_employer_name"] + \
+        f" (ИНН {data['head']['inn']})" if data["head"].get("inn") is not None else ""
+    lines = [
+        f"Я, {data['head']['user_name']}, работал {data['story']['user_position']} в {full_employer_name} "
+        f"с {data['story']['start_work_date'].strftime('%d/%m/%Y')} на основании трудового договора №__, "
+        f"в соответствии с которым был принят на работу к ответчику на должность {data['story']['user_position']} "
+        f"с окладом {data['story']['user_salary']} рублей.",
+        data["story"]["story_conflict"]
+    ]
+
+    if data["story"]["user_employer_discussion"] != "":
+        lines.append(data["story"]["user_employer_discussion"])
+    if data["story"]["story_details"] != "":
+        lines.append(data["story"]["story_details"])
+    return lines
 
 
 def get_law_text(claim_theme: str) -> str:

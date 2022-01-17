@@ -14,8 +14,12 @@ example_kb = ReplyKeyboardMarkup(resize_keyboard=True)
 example_kb.row(example_btn)
 
 
+CLAIM_PART: str = "story"
+
+
 class StoryPart(StatesGroup):
     waiting_for_start_work_date = State()
+    waiting_for_end_work_date = State()
     waiting_for_user_position = State()
     waiting_for_user_salary = State()
     waiting_for_user_story_conflict = State()
@@ -34,6 +38,26 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
     is_date, start_work_date = await telegram_calendar.process_calendar_selection(callback_query)
     if is_date:
         await state.update_data(start_work_date=start_work_date)
+        repository: Repository = Repository()
+        claim_theme: Optional[str] = repository.get_current_claim_theme(callback_query.from_user.id)
+        actions: Optional[List[str]] = repository.get_claim_tmp_actions(claim_theme, CLAIM_PART)
+        if actions is not None and "enter_end_date" in actions:
+            await StoryPart.waiting_for_end_work_date.set()
+            calendar_kb = telegram_calendar.create_calendar()
+            await callback_query.message.answer(
+                "Далее укажите дату последнего отработанного дня в компании.",
+                reply_markup=calendar_kb)
+        else:
+            await StoryPart.waiting_for_user_position.set()
+            await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
+                                                "Можно посмотреть в трудовой книжке или трудовом договоре.",
+                                                reply_markup=example_kb)
+
+
+async def end_work_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
+    is_date, end_work_date = await telegram_calendar.process_calendar_selection(callback_query)
+    if is_date:
+        await state.update_data(end_work_date=end_work_date)
         await StoryPart.waiting_for_user_position.set()
         await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
                                             "Можно посмотреть в трудовой книжке или трудовом договоре.",
@@ -131,6 +155,7 @@ def register_handlers(dp: Dispatcher):
                                 filters.Regexp(f"^{emojis.red_question_mark} показать пример"),
                                 state=StoryPart.states)
     dp.register_callback_query_handler(start_work_date_entered, state=StoryPart.waiting_for_start_work_date)
+    dp.register_callback_query_handler(end_work_date_entered, state=StoryPart.waiting_for_end_work_date)
     dp.register_message_handler(user_position_entered, state=StoryPart.waiting_for_user_position)
     dp.register_message_handler(user_salary_entered, state=StoryPart.waiting_for_user_salary)
     dp.register_message_handler(story_conflict_entered, state=StoryPart.waiting_for_user_story_conflict)

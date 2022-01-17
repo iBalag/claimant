@@ -168,7 +168,9 @@ async def court_entered(message: types.Message, state: FSMContext):
         chosen_court: CourtInfo = CourtInfo(name=court_info_agg[0], address=address, note="")
         await state.update_data(chosen_court=chosen_court)
         await HeadPart.waiting_for_employer_name.set()
-        await message.answer("Введите название организации, в которой вы работаете. Например: OOO \"Рога и Копыта\"")
+        await message.answer("Введите название организации и её ИНН, в которой вы работаете. "
+                             "Если не знаете ИНН, введите просто название.\n"
+                             "Например: OOO \"Рога и Копыта\" (ИНН 555555555555)")
 
 
 async def court_chosen(callback_query: types.CallbackQuery, state: FSMContext):
@@ -179,13 +181,20 @@ async def court_chosen(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer(text=f"Суд '{chosen_court.name}' выбран.", show_alert=True)
     await state.update_data(chosen_court=chosen_court)
     await HeadPart.waiting_for_employer_name.set()
-    await callback_query.message.answer("Введите название организации, в которой вы работаете. "
-                                        "Например: OOO \"Рога и Копыта\"")
+    await callback_query.message.answer("Введите название организации и её ИНН, в которой вы работаете. "
+                                        "Если не знаете ИНН, введите просто название.\n"
+                                        "Например: OOO \"Рога и Копыта\" (ИНН 555555555555)")
 
 
 async def employer_name_chosen(message: types.Message, state: FSMContext):
-    employer_name: Optional[str] = message.text
+    employer_name_raw: Optional[str] = message.text
+    employer_name = re.sub("\\(ИНН \\d{12}\\)", "", employer_name_raw).strip()
     await state.update_data(chosen_employer_name=employer_name)
+
+    inn_match = re.search("\\d{12}", employer_name_raw)
+    if inn_match is not None:
+        await state.update_data(inn=inn_match.group(0))
+
     await HeadPart.waiting_for_employer_address.set()
     await message.reply("Принято товарищ! А теперь введи адрес организации, в которой вы работаете. "
                         "Например: 101002, г. Любой, ул. Любая, д.4",

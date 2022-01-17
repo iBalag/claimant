@@ -99,3 +99,10 @@ class Repository:
         if claim_tmp is not None and part in claim_tmp.keys() and "options" in claim_tmp[part].keys():
             options = claim_tmp[part]["options"]
         return options
+
+    def get_claim_tmp_actions(self, claim_theme: str, part: str) -> Optional[List[str]]:
+        claim_tmp: Optional[dict] = self.get_claim_tmp(claim_theme)
+        actions: Optional[List[str]] = None
+        if claim_tmp is not None and part in claim_tmp.keys() and "actions" in claim_tmp[part].keys():
+            actions = claim_tmp[part]["actions"]
+        return actions

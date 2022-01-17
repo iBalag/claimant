@@ -1,4 +1,3 @@
-import asyncio
 from collections import namedtuple
 from io import StringIO
 from typing import List
