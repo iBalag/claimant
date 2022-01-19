@@ -3,13 +3,16 @@ from typing import List, Optional
 
 import pytz
 from aiogram import types, Dispatcher, filters
+from aiogram.dispatcher import FSMContext
 from aiogram.types import ReplyKeyboardMarkup
 
 from repository import Repository
 from keyboards import get_start_menu_kb, get_claim_tmps_list_kb, get_claim_parts_kb, emojis
 
 
-async def start_menu(message: types.Message):
+async def start_menu(message: types.Message, state: FSMContext):
+    if state is not None:
+        await state.finish()
     start_menu_kb: ReplyKeyboardMarkup = get_start_menu_kb()
     await message.reply("Добрый день! Выберите одну из следующих команд:", reply_markup=start_menu_kb)
 
@@ -44,7 +47,7 @@ async def choose_claim_part(message: types.Message):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(start_menu, commands=["start"])
+    dp.register_message_handler(start_menu, commands=["start"], state="*")
     dp.register_message_handler(start_menu, filters.Regexp(f"^{emojis.left_arrow} назад"))
     dp.register_message_handler(show_bot_info, filters.Regexp(f"^{emojis.bookmark_tabs} узнать о боте$"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))

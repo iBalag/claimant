@@ -2,6 +2,7 @@ version: "3.8"
 services:
 #  bot:
 #    image: "claimant-bot:latest"
+#    container_name: "claimant-bot"
 #    volumes:
 #      - ./.env:/claimant/.env
 
