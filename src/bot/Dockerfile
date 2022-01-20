@@ -9,4 +9,4 @@ COPY --from=compile-image claimant claimant
 ENV PATH=/root/.local/bin:$PATH
 COPY . claimant
 WORKDIR claimant
-CMD ["python", "bot.py", "-e", "dev"]
+CMD ["python", "bot.py", "-e", "prod"]
