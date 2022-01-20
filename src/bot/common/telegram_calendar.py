@@ -72,7 +72,6 @@ async def process_calendar_selection(query: types.CallbackQuery):
     backward is pressed. This method should be called inside a CallbackQueryHandler.
     """
     ret_data = (False, None)
-    # print(query)
     (_, action, year, month, day) = separate_callback_data(query.data)
     curr = datetime.datetime(int(year), int(month), 1)
     if action == "IGNORE":
@@ -91,12 +90,6 @@ async def process_calendar_selection(query: types.CallbackQuery):
                                           reply_markup=create_calendar(int(ne.year), int(ne.month)))
     elif action == "DAY":
         ret_data = True, datetime.datetime(int(year), int(month), int(day))
-        await query.answer(text=f"Выбрана дата: {ret_data[1].strftime('%d/%m/%Y')}.", show_alert=True)
-        # disable removing calendar keyboard because it can confuse user
-        # await query.bot.edit_message_text(text=query.message.text,
-        #                                   chat_id=query.message.chat.id,
-        #                                   message_id=query.message.message_id
-        #                                   )
     elif action == "PREV-MONTH":
         pre = curr - datetime.timedelta(days=1)
         await query.bot.edit_message_text(text=query.message.text,

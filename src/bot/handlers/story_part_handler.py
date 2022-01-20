@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from aiogram import types, Dispatcher, filters
@@ -37,6 +38,12 @@ async def story_start(message: types.Message):
 async def start_work_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
     is_date, start_work_date = await telegram_calendar.process_calendar_selection(callback_query)
     if is_date:
+        if start_work_date > datetime.now():
+            await callback_query.answer(text="Выбрана некорректная дата (больше текущей). Попробуйте еще раз.",
+                                        show_alert=True)
+            return
+
+        await callback_query.answer(text=f"Выбрана дата: {start_work_date.strftime('%d/%m/%Y')}.", show_alert=True)
         await state.update_data(start_work_date=start_work_date)
         repository: Repository = Repository()
         claim_theme: Optional[str] = repository.get_current_claim_theme(callback_query.from_user.id)
@@ -57,6 +64,21 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
 async def end_work_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
     is_date, end_work_date = await telegram_calendar.process_calendar_selection(callback_query)
     if is_date:
+        if end_work_date > datetime.now():
+            await callback_query.answer(text="Выбрана некорректная дата (больше текущей). Попробуйте еще раз.",
+                                        show_alert=True)
+            return
+
+        user_data = await state.get_data()
+        start_work_date = user_data.get("start_work_date")
+        if end_work_date <= start_work_date:
+            await callback_query.answer(
+                text="Дата последнего рабочего дня должна быть больше даты первого рабочего дня."
+                     "Попробуйте еще раз.",
+                     show_alert=True)
+            return
+
+        await callback_query.answer(text=f"Выбрана дата: {end_work_date.strftime('%d/%m/%Y')}.", show_alert=True)
         await state.update_data(end_work_date=end_work_date)
         await StoryPart.waiting_for_user_position.set()
         await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
