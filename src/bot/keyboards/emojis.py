@@ -19,4 +19,5 @@ open_book: str = "\U0001F4D6"
 index_pointing_up: str = "\U0000261D"
 card_index_dividers: str = "\U0001F5C2"
 inbox_tray: str = "\U0001F4E5"
+double_exclamation_mark: str = "\U0000203C"
 

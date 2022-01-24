@@ -25,7 +25,6 @@ class StoryPart(StatesGroup):
     waiting_for_user_salary = State()
     waiting_for_user_story_conflict = State()
     waiting_for_user_employer_discussion = State()
-    waiting_for_user_story_details = State()
 
 
 async def story_start(message: types.Message):
@@ -105,7 +104,8 @@ async def story_conflict_entered(message: types.Message, state: FSMContext):
     await state.update_data(story_conflict=story_conflict)
     await StoryPart.waiting_for_user_employer_discussion.set()
     await message.answer("Дальше опишите ваше общение с работодателем: как развивался конфликт, "
-                         "какие действия совершали вы и работодатель. "
+                         "какие действия совершали вы и работодатель. Если считаете важным, добавьте детали, например, "
+                         "что в этот момент происходило в компании, как реагировали ваши коллеги.\n"
                          "Если добавить нечего - просто напишите 'нет'.", reply_markup=example_kb)
 
 
@@ -113,19 +113,8 @@ async def user_employer_discussion_entered(message: types.Message, state: FSMCon
     user_employer_discussion: Optional[str] = message.text
     if user_employer_discussion is None or user_employer_discussion.lower() == "нет":
         user_employer_discussion = ""
+
     await state.update_data(user_employer_discussion=user_employer_discussion)
-    await StoryPart.waiting_for_user_story_details.set()
-    await message.answer("Если считаете важным, добавьте детали, например, что в этот момент "
-                         "происходило в компании, как реагировали ваши коллеги. "
-                         "Если добавить нечего - просто напишите 'нет'.", reply_markup=example_kb)
-
-
-async def story_details_entered(message: types.Message, state: FSMContext):
-    story_details: Optional[str] = message.text
-    if story_details is None or story_details.lower() == "нет":
-        story_details = ""
-
-    await state.update_data(story_details=story_details)
     await message.answer("Данные раздела 'фабула' успешно заполнены.", reply_markup=ReplyKeyboardRemove())
 
     user_id = message.from_user.id
@@ -160,8 +149,6 @@ async def show_example(message: types.Message, state: FSMContext):
         example_index = 1
     if current_state == StoryPart.waiting_for_user_employer_discussion.state:
         example_index = 2
-    if current_state == StoryPart.waiting_for_user_story_details.state:
-        example_index = 3
 
     if example_index is None or example_index > (len(story_examples) - 1):
         await message.reply("Для данной части фабулы не найдено примера.")
@@ -182,7 +169,6 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(user_salary_entered, state=StoryPart.waiting_for_user_salary)
     dp.register_message_handler(story_conflict_entered, state=StoryPart.waiting_for_user_story_conflict)
     dp.register_message_handler(user_employer_discussion_entered, state=StoryPart.waiting_for_user_employer_discussion)
-    dp.register_message_handler(story_details_entered, state=StoryPart.waiting_for_user_story_details)
 
 
 

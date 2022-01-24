@@ -15,7 +15,7 @@ CLAIM_PART: str = "claims"
 
 
 class ClaimsPart(StatesGroup):
-    waiting_for_annual_profit = State()
+    waiting_for_avr_salary = State()
     waiting_for_optional_claim = State()
 
 
@@ -33,9 +33,10 @@ async def claims_start(message: types.Message, state: FSMContext):
     # TODO: add support of multiple options
     claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
     actions: Optional[List[str]] = repository.get_claim_tmp_actions(claim_theme, CLAIM_PART)
-    if actions is not None and "annual_profit" in actions:
-        await ClaimsPart.waiting_for_annual_profit.set()
-        await message.answer("Пожалуйста, укажите сколько вы заработали за последний год.",
+    if actions is not None and "enter_avr_salary" in actions:
+        await ClaimsPart.waiting_for_avr_salary.set()
+        await message.answer("Пожалуйста, укажите средних доход, который вы получаете за месяц работы, "
+                             "с учетом всех надбавок и премий.",
                              reply_markup=ReplyKeyboardRemove())
         return
 
@@ -43,17 +44,17 @@ async def claims_start(message: types.Message, state: FSMContext):
     await process_claim_options(claim_theme, options, claim_data, message, state)
 
 
-async def annual_profit_entered(message: types.Message, state: FSMContext):
-    annual_profit_raw: Optional[str] = message.text
-    if annual_profit_raw is None or annual_profit_raw.isdigit() is False:
+async def avr_salary_entered(message: types.Message, state: FSMContext):
+    avr_salary_raw: Optional[str] = message.text
+    if avr_salary_raw is None or avr_salary_raw.isdigit() is False:
         await message.reply("Заработок за прошлый год указан неверно. Попробуйте еще раз.")
         return
-    annual_profit = float(annual_profit_raw)
-    await state.update_data(annual_profit=annual_profit)
+    avr_salary = float(avr_salary_raw)
+    await state.update_data(avr_salary=avr_salary)
 
     repository: Repository = Repository()
     claim_data: dict = repository.get_claim_data(message.from_user.id)
-    claim_data["claim_data"]["annual_profit"] = annual_profit
+    claim_data["claim_data"]["avr_salary"] = avr_salary
 
     claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
     options: Optional[List[str]] = repository.get_claim_tmp_options(claim_theme, CLAIM_PART)
@@ -103,24 +104,37 @@ def get_placeholders(claim_data: dict) -> dict:
         "current_date": current_date.strftime("%d/%m/%Y"),
     }
 
-    if "annual_profit" in claim_data.keys():
+    if "avr_salary" in claim_data.keys():
         placeholders["oof_profit"] = calc_oof_profit(start_oof_date, current_date,
-                                                     claim_data["annual_profit"])
+                                                     claim_data["avr_salary"])
     return placeholders
 
 
-def calc_oof_profit(start_oof_date: datetime, current_date: datetime, annual_profit: float) -> float:
+def calc_months_diff(star_date: datetime, end_date: datetime) -> int:
+    if end_date <= star_date:
+        return 0
+
+    year_diff = end_date.year - star_date.year
+    if end_date.month < star_date.month:
+        year_diff = year_diff - 1
+        month_diff = (end_date.month + 12) - star_date.month
+    else:
+        month_diff = end_date.month - star_date.month
+
+    return year_diff * 12 + month_diff
+
+
+def calc_oof_profit(start_oof_date: datetime, current_date: datetime, avr_salary: float) -> float:
     _, first_oof_month_days = monthrange(start_oof_date.year, start_oof_date.month)
     first_month_days_off: int = first_oof_month_days - start_oof_date.day
     avr_first_month_days_off: float = 29.3/first_oof_month_days * first_month_days_off
-    off_months: int = current_date.month - start_oof_date.month - 1
-    off_months = 0 if off_months == -1 else off_months
-    avr_payment_day = (annual_profit/12)/29.3
+    off_months: int = calc_months_diff(start_oof_date, current_date) - 1
+    avr_payment_day = avr_salary/29.3
     off_profit = ((off_months * 29.3) + avr_first_month_days_off) * avr_payment_day
     return round(off_profit, 2)
 
 
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(claims_start, filters.Regexp(f"^{emojis.index_pointing_up} требования"))
-    dp.register_message_handler(annual_profit_entered, state=ClaimsPart.waiting_for_annual_profit)
+    dp.register_message_handler(avr_salary_entered, state=ClaimsPart.waiting_for_avr_salary)
     dp.register_message_handler(optional_claim_selected, state=ClaimsPart.waiting_for_optional_claim)
