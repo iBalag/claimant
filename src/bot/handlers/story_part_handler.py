@@ -23,6 +23,7 @@ class StoryPart(StatesGroup):
     waiting_for_end_work_date = State()
     waiting_for_user_position = State()
     waiting_for_user_salary = State()
+    waiting_for_avr_salary = State()
     waiting_for_user_story_conflict = State()
     waiting_for_user_employer_discussion = State()
 
@@ -42,7 +43,7 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
                                         show_alert=True)
             return
 
-        await callback_query.answer(text=f"Выбрана дата: {start_work_date.strftime('%d/%m/%Y')}.", show_alert=True)
+        await callback_query.answer(text=f"Выбрана дата: {start_work_date.strftime('%d.%m.%Y')}.", show_alert=True)
         await state.update_data(start_work_date=start_work_date)
         repository: Repository = Repository()
         claim_theme: Optional[str] = repository.get_current_claim_theme(callback_query.from_user.id)
@@ -77,7 +78,7 @@ async def end_work_date_entered(callback_query: types.CallbackQuery, state: FSMC
                      show_alert=True)
             return
 
-        await callback_query.answer(text=f"Выбрана дата: {end_work_date.strftime('%d/%m/%Y')}.", show_alert=True)
+        await callback_query.answer(text=f"Выбрана дата: {end_work_date.strftime('%d.%m.%Y')}.", show_alert=True)
         await state.update_data(end_work_date=end_work_date)
         await StoryPart.waiting_for_user_position.set()
         await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
@@ -95,6 +96,29 @@ async def user_position_entered(message: types.Message, state: FSMContext):
 async def user_salary_entered(message: types.Message, state: FSMContext):
     user_salary: Optional[str] = message.text
     await state.update_data(user_salary=user_salary)
+
+    repository: Repository = Repository()
+    claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
+    actions: Optional[List[str]] = repository.get_claim_tmp_actions(claim_theme, CLAIM_PART)
+    if actions is not None and "enter_avr_salary" in actions:
+        await StoryPart.waiting_for_avr_salary.set()
+        await message.answer("Пожалуйста, укажите средних доход, который вы получаете за месяц работы, "
+                             "с учетом всех надбавок и премий.",
+                             reply_markup=ReplyKeyboardRemove())
+        return
+
+    await StoryPart.waiting_for_user_story_conflict.set()
+    await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
+
+
+async def avr_salary_entered(message: types.Message, state: FSMContext):
+    avr_salary_raw: Optional[str] = message.text
+    if avr_salary_raw is None or avr_salary_raw.isdigit() is False:
+        await message.reply("Средний доход за месяц указан неверно. Попробуйте еще раз.")
+        return
+
+    avr_salary = float(avr_salary_raw)
+    await state.update_data(avr_salary=avr_salary)
     await StoryPart.waiting_for_user_story_conflict.set()
     await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
 
@@ -147,8 +171,6 @@ async def show_example(message: types.Message, state: FSMContext):
         example_index = 0
     if current_state == StoryPart.waiting_for_user_story_conflict.state:
         example_index = 1
-    if current_state == StoryPart.waiting_for_user_employer_discussion.state:
-        example_index = 2
 
     if example_index is None or example_index > (len(story_examples) - 1):
         await message.reply("Для данной части фабулы не найдено примера.")
@@ -167,6 +189,7 @@ def register_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(end_work_date_entered, state=StoryPart.waiting_for_end_work_date)
     dp.register_message_handler(user_position_entered, state=StoryPart.waiting_for_user_position)
     dp.register_message_handler(user_salary_entered, state=StoryPart.waiting_for_user_salary)
+    dp.register_message_handler(avr_salary_entered, state=StoryPart.waiting_for_avr_salary)
     dp.register_message_handler(story_conflict_entered, state=StoryPart.waiting_for_user_story_conflict)
     dp.register_message_handler(user_employer_discussion_entered, state=StoryPart.waiting_for_user_employer_discussion)
 

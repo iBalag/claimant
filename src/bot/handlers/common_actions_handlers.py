@@ -1,4 +1,6 @@
-from typing import List, Optional
+from calendar import monthrange
+from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -14,6 +16,8 @@ TERM_DISPLAY_NAME_MAP: dict = {
     "claims": "требования",
     "additions": "приложения"
 }
+
+WORK_DAYS_PER_MONTH: int = 20
 
 
 async def process_manual_enter(message: types.Message, state: FSMContext, state_groups):
@@ -97,8 +101,10 @@ async def show_claim_tmp_example(message: types.Message, claim_part):
                              reply_markup=next_actions_kb)
         return
 
+    claim_data = repository.get_claim_data(message.from_user.id, claim_theme)
+    placeholders = get_placeholders(claim_data["claim_data"])
     for i, example in enumerate(examples):
-        await message.reply(f"Пример №{i+1}: {example}")
+        await message.reply(f"Пример №{i+1}: {example.format(**placeholders)}")
 
     await message.answer("Введите свой вариант самостоятельно. "
                          "Или выберите дальнейшее действие с помощью клавиатуры",
@@ -119,3 +125,65 @@ async def process_complete_part_editing(message: types.Message, state: FSMContex
     await state.finish()
     claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
     await message.answer("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
+
+
+def get_placeholders(claim_data: dict) -> dict:
+    placeholders: dict = {
+        "start_work_date": claim_data["story"]["start_work_date"].strftime("%d.%m.%Y"),
+        "salary": claim_data["story"]["user_salary"],
+    }
+
+    current_date: datetime = datetime.now()
+    end_work_date = claim_data["story"]["end_work_date"]
+    avr_salary = claim_data["story"].get("avr_salary")
+    if end_work_date is not None and avr_salary is not None:
+        placeholders["current_date"] = current_date.strftime("%d.%m.%Y")
+        placeholders["avr_salary"] = avr_salary
+        start_oof_date: datetime = end_work_date + timedelta(days=1)
+        placeholders["start_oof_date"] = start_oof_date.strftime("%d.%m.%Y")
+        oof_profit, oof_days = calc_oof_profit(start_oof_date, current_date, avr_salary)
+        placeholders["oof_days"] = oof_days
+        placeholders["oof_profit"] = oof_profit
+
+    return placeholders
+
+
+def calc_months_diff(star_date: datetime, end_date: datetime) -> int:
+    if end_date <= star_date:
+        return 0
+
+    year_diff = end_date.year - star_date.year
+    if end_date.month < star_date.month:
+        year_diff = year_diff - 1
+        month_diff = (end_date.month + 12) - star_date.month
+    else:
+        month_diff = end_date.month - star_date.month
+
+    return year_diff * 12 + month_diff
+
+
+def calc_first_month_days_oof(day: int, weekday: int, months_days: int):
+    days_off: int = 0
+    for d in range(day, months_days + 1):
+        if weekday < 5:
+            days_off = days_off + 1
+        weekday = weekday + 1
+        if weekday == 7:
+            weekday = 0
+    return days_off
+
+
+def calc_oof_profit(start_oof_date: datetime, current_date: datetime, avr_salary: float) -> Tuple[float, int]:
+    avr_payment_day = avr_salary / WORK_DAYS_PER_MONTH
+    months_diff: int = calc_months_diff(start_oof_date, current_date)
+    if months_diff > 0:
+        _, first_oof_month_days = monthrange(start_oof_date.year, start_oof_date.month)
+        first_month_days_off: int = calc_first_month_days_oof(start_oof_date.day, start_oof_date.weekday(),
+                                                              first_oof_month_days)
+        off_months: int = months_diff - 1
+        oof_days = off_months * WORK_DAYS_PER_MONTH + first_month_days_off
+    else:
+        oof_days = calc_first_month_days_oof(start_oof_date.day, start_oof_date.weekday(),
+                                             current_date.day)
+    oof_profit = oof_days * avr_payment_day
+    return round(oof_profit, 2), oof_days
