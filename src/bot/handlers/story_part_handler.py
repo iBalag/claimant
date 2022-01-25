@@ -90,7 +90,7 @@ async def user_position_entered(message: types.Message, state: FSMContext):
     user_position: Optional[str] = message.text
     await state.update_data(user_position=user_position)
     await StoryPart.waiting_for_user_salary.set()
-    await message.answer("Укажите, какой у вас был оклад.", reply_markup=example_kb)
+    await message.answer("Укажите, какой у вас был оклад. Например: 30000", reply_markup=example_kb)
 
 
 async def user_salary_entered(message: types.Message, state: FSMContext):
@@ -103,7 +103,7 @@ async def user_salary_entered(message: types.Message, state: FSMContext):
     if actions is not None and "enter_avr_salary" in actions:
         await StoryPart.waiting_for_avr_salary.set()
         await message.answer("Пожалуйста, укажите средних доход, который вы получаете за месяц работы, "
-                             "с учетом всех надбавок и премий.",
+                             "с учетом всех надбавок и премий. Например: 35000",
                              reply_markup=ReplyKeyboardRemove())
         return
 

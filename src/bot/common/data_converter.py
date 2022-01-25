@@ -40,14 +40,17 @@ def convert_to_doc(data: dict) -> Document:
     # essence
     essence: Paragraph = claim_doc.add_paragraph()
     essence.add_run("Считаю, что мои права нарушены, поскольку: ")
-    essence.add_run(", ".join(data["claim_data"]["essence"]["chosen_options"]))
+    essence_options: List[str] = data["claim_data"]["essence"]["chosen_options"]
+    essence_options[0] = essence_options[0][0].lower() + essence_options[0][1:]
+    essence.add_run(", ".join(essence_options))
     essence.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
     essence.paragraph_format.first_line_indent = Inches(0.5)
 
     # proofs
     proofs: Paragraph = claim_doc.add_paragraph()
     proofs_data: List[str] = data["claim_data"]["proofs"]["chosen_options"]
-    proofs.text = f"В качестве доказательств нарушения своих прав я предоставляю: {', '.join(proofs_data)}."
+    proofs.text = "Доводы, указанные в исковом заявлении подтверждаются следующими " + \
+                  f"доказательствами: {', '.join(proofs_data)}."
     proofs.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
     proofs.paragraph_format.first_line_indent = Inches(0.5)
 
@@ -94,7 +97,7 @@ def get_head_text(head_data: dict) -> str:
         f"Истец: {head_data['user_name']}",
         f"Адрес: {head_data['user_post_code']}, г. {head_data['chosen_city']}, "
         f"ул. {head_data['chosen_street']}, д. {head_data['house_chosen']}"
-        f"{', кв. ' + head_data['apartment_chosen'] if head_data.get('apartment_chosen') is not None else ''}",
+        f"{', кв. ' + head_data['apartment_chosen'] if head_data['apartment_chosen'] != '' else ''}",
         "",
         f"Ответчик: {head_data['chosen_employer_name']}" +
         f" (ИНН {head_data['inn']})" if head_data.get("inn") is not None else '',
@@ -109,7 +112,7 @@ def get_story_parts(data: dict) -> List[str]:
         f" (ИНН {data['head']['inn']})" if data["head"].get("inn") is not None else ""
     lines = [
         f"Я, {data['head']['user_name']}, работал {data['story']['user_position']} в {full_employer_name} "
-        f"с {data['story']['start_work_date'].strftime('%d/%m/%Y')} на основании трудового договора №__, "
+        f"с {data['story']['start_work_date'].strftime('%d.%m.%Y')} на основании трудового договора, "
         f"в соответствии с которым был принят на работу к ответчику на должность {data['story']['user_position']} "
         f"с окладом {data['story']['user_salary']} рублей.",
         data["story"]["story_conflict"]
@@ -117,8 +120,6 @@ def get_story_parts(data: dict) -> List[str]:
 
     if data["story"]["user_employer_discussion"] != "":
         lines.append(data["story"]["user_employer_discussion"])
-    if data["story"]["story_details"] != "":
-        lines.append(data["story"]["story_details"])
     return lines
 
 
@@ -128,7 +129,7 @@ def get_law_text(claim_theme: str) -> str:
     if law_data is None:
         return ""
 
-    return f"Считаю, что работодателем нарушены следующий законы: {', '.join(law_data)}."
+    return f"На основании изложенного, руководствуясь {', '.join(law_data)}."
 
 
 def get_short_user_name(user_name: str) -> str:

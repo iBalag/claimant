@@ -91,8 +91,8 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
                             "Если ты живешь в частном доме, просто ответь: нет",
                             reply_markup=ReplyKeyboardRemove())
         return
-
-    await state.update_data(apartment_chosen=apartment)
+    else:
+        await state.update_data(apartment_chosen=apartment)
     user_data = await state.get_data()
     repository: Repository = Repository()
     region_code: str = repository.get_region_code(user_data["user_post_code"])

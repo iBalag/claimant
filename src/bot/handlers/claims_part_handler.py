@@ -6,6 +6,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 
+from common import calc_oof_profit
 from handlers.common_actions_handlers import process_complete_part_editing
 from keyboards import emojis, get_claim_parts_kb
 from repository import Repository
@@ -77,7 +78,8 @@ def get_placeholders(claim_data: dict) -> dict:
     }
 
     if "avr_salary" in claim_data["story"].keys():
-        placeholders["oof_profit"] = claim_data["story"]["avr_salary"]
+        oof_profit, _ = calc_oof_profit(start_oof_date, current_date, claim_data["story"]["avr_salary"])
+        placeholders["oof_profit"] = oof_profit
     return placeholders
 
 
