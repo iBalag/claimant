@@ -30,7 +30,7 @@ def calc_first_month_days_oof(day: int, weekday: int, months_days: int):
     return days_off
 
 
-def calc_oof_profit(start_oof_date: datetime, current_date: datetime, avr_salary: float) -> Tuple[float, int]:
+def calc_oof_profit(start_oof_date: datetime, current_date: datetime, avr_salary: float) -> Tuple[float, int, int, int]:
     avr_payment_day = avr_salary / WORK_DAYS_PER_MONTH
     months_diff: int = calc_months_diff(start_oof_date, current_date)
     if months_diff > 0:
@@ -42,4 +42,4 @@ def calc_oof_profit(start_oof_date: datetime, current_date: datetime, avr_salary
         oof_days = calc_first_month_days_oof(start_oof_date.day, start_oof_date.weekday(),
                                              current_date.day)
     oof_profit = oof_days * avr_payment_day
-    return round(oof_profit, 2), oof_days
+    return round(oof_profit, 2), oof_days, months_diff, first_month_days_off

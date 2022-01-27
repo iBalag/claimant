@@ -1,11 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.shared import Inches
+from docx.shared import Inches, Pt
 from docx.text.paragraph import Paragraph
 
+from common import calc_oof_profit
 from repository import Repository
 
 
@@ -135,3 +136,51 @@ def get_law_text(claim_theme: str) -> str:
 def get_short_user_name(user_name: str) -> str:
     soname, name, second_name = tuple(user_name.split(" "))
     return f"{name[0].upper()}.{second_name[0].upper()}. {soname}"
+
+
+def get_oof_profit_calculation(claim_data: dict) -> Document:
+    end_work_date: datetime = claim_data["story"]["end_work_date"]
+    start_oof_date: datetime = end_work_date + timedelta(days=1)
+    avr_salary = claim_data["story"]["avr_salary"]
+    oof_profit, oof_days, months_diff, first_month_days_off = calc_oof_profit(start_oof_date, datetime.now(),
+                                                                              avr_salary)
+
+    calc_doc: Document = Document()
+
+    # common doc settings
+    section = calc_doc.sections[-1]
+    section.top_margin = Inches(0.6)
+    section.bottom_margin = Inches(0.6)
+    section.left_margin = Inches(1)
+    section.right_margin = Inches(0.6)
+
+    theme: Paragraph = calc_doc.add_paragraph()
+    theme_font = theme.add_run("Расчет задолженности по заработной плате за время вынужденного прогула").font
+
+    theme.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    theme_font.size = Pt(14)
+    theme_font.bold = True
+
+    calc: Paragraph = calc_doc.add_paragraph()
+    calc_text: str = f"""
+Средняя заработная плата за предыдущий период
+Среднее число рабочих дней в месяце: 20
+Cредняя заработная плата в месяц: {avr_salary}
+Средний заработок за день: {avr_salary} / 20 = {avr_salary/20}
+
+Время вынужденного прогула
+Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}
+Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}
+Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}
+Число рабочих дней за время первого месяца вынужденного прогула: {first_month_days_off}
+Число месяцев за время вынужденного прогула: {months_diff}
+Число рабочих дней за время вынужденного прогула: {months_diff} * 20 + {first_month_days_off} = {oof_days}
+
+Сумма задолженности за время вынужденного прогула:
+{{средний заработок за день}} * {{Число рабочих дней за время вынужденного прогула}} =
+{oof_days} * {avr_salary/20} = {oof_profit}
+    """
+    calc_font = calc.add_run(calc_text).font
+    calc_font.size = Pt(12)
+
+    return calc_doc

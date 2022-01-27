@@ -139,7 +139,7 @@ def get_placeholders(claim_data: dict) -> dict:
         placeholders["avr_salary"] = avr_salary
         start_oof_date: datetime = end_work_date + timedelta(days=1)
         placeholders["start_oof_date"] = start_oof_date.strftime("%d.%m.%Y")
-        oof_profit, oof_days = calc_oof_profit(start_oof_date, current_date, avr_salary)
+        oof_profit, oof_days, _, _ = calc_oof_profit(start_oof_date, current_date, avr_salary)
         placeholders["oof_days"] = oof_days
         placeholders["oof_profit"] = oof_profit
 

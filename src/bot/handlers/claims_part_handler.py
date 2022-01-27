@@ -78,7 +78,7 @@ def get_placeholders(claim_data: dict) -> dict:
     }
 
     if "avr_salary" in claim_data["story"].keys():
-        oof_profit, _ = calc_oof_profit(start_oof_date, current_date, claim_data["story"]["avr_salary"])
+        oof_profit, _, _, _ = calc_oof_profit(start_oof_date, current_date, claim_data["story"]["avr_salary"])
         placeholders["oof_profit"] = oof_profit
     return placeholders
 
