@@ -1,11 +1,11 @@
 from io import BytesIO
-from typing import Optional
+from typing import Optional, List
 
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import filters
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
-from common.data_converter import convert_to_doc
+from common.data_converter import convert_to_doc, get_oof_profit_calculation
 from keyboards import emojis
 from keyboards.claim_parts import PART_NAMES, get_claim_parts_kb
 from repository import Repository
@@ -31,6 +31,19 @@ async def download_doc(message: types.Message):
         await message.answer_document(document=claim_doc_file,
                                       disable_content_type_detection=True,
                                       reply_markup=ReplyKeyboardRemove())
+
+    claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
+    actions: Optional[List[str]] = repository.get_claim_tmp_actions(claim_theme, "story")
+    if actions is not None and "enter_avr_salary" in actions:
+        calc_doc: Document = get_oof_profit_calculation(claim_data["claim_data"])
+        with BytesIO() as calc_doc_file:
+            calc_doc.save(calc_doc_file)
+            calc_doc_file.seek(0)
+            calc_doc_file.name = "Расчет задолженности по заработной плате за время вынужденного прогула.docx"
+            await message.answer("Сгенерированное приложение:")
+            await message.answer_document(document=calc_doc_file,
+                                          disable_content_type_detection=True,
+                                          reply_markup=ReplyKeyboardRemove())
 
     # remove data from db
     previous_claim_data: Optional[dict] = repository.get_claim_data(message.from_user.id, claim_data["claim_theme"])

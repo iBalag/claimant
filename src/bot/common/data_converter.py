@@ -162,25 +162,26 @@ def get_oof_profit_calculation(claim_data: dict) -> Document:
     theme_font.bold = True
 
     calc: Paragraph = calc_doc.add_paragraph()
-    calc_text: str = f"""
-Средняя заработная плата за предыдущий период
-Среднее число рабочих дней в месяце: 20
-Cредняя заработная плата в месяц: {avr_salary}
-Средний заработок за день: {avr_salary} / 20 = {avr_salary/20}
+    avr_salary_title_font = calc.add_run("Средняя заработная плата за предыдущий период\n").font
+    avr_salary_title_font.bold = True
+    calc.add_run("Среднее число рабочих дней в месяце: 20\n"
+                 f"Cредняя заработная плата в месяц: {avr_salary}\n"
+                 f"Средний заработок за день: {avr_salary} / 20 = {avr_salary/20}\n\n")
 
-Время вынужденного прогула
-Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}
-Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}
-Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}
-Число рабочих дней за время первого месяца вынужденного прогула: {first_month_days_off}
-Число месяцев за время вынужденного прогула: {months_diff}
-Число рабочих дней за время вынужденного прогула: {months_diff} * 20 + {first_month_days_off} = {oof_days}
+    day_oof_title_font = calc.add_run("Время вынужденного прогула\n").font
+    day_oof_title_font.bold = True
+    calc.add_run(
+        f"Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}\n"
+        f"Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}\n"
+        f"Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}\n"
+        f"Число рабочих дней за время первого месяца вынужденного прогула: {first_month_days_off}\n"
+        f"Число месяцев за время вынужденного прогула: {months_diff}\n"
+        f"Число рабочих дней за время вынужденного прогула: {months_diff} * 20 + {first_month_days_off} = {oof_days}\n\n"
+    )
 
-Сумма задолженности за время вынужденного прогула:
-{{средний заработок за день}} * {{Число рабочих дней за время вынужденного прогула}} =
-{oof_days} * {avr_salary/20} = {oof_profit}
-    """
-    calc_font = calc.add_run(calc_text).font
-    calc_font.size = Pt(12)
+    oof_profit_title_font = calc.add_run("Сумма задолженности за время вынужденного прогула\n").font
+    oof_profit_title_font.bold = True
+    calc.add_run("{средний заработок за день} * {Число рабочих дней за время вынужденного прогула} = "
+                 f"{oof_days} * {avr_salary/20} = {oof_profit}")
 
     return calc_doc
