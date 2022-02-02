@@ -1,12 +1,24 @@
 version: "3.8"
 services:
-  bot:
-    image: "claimant-bot:dev"
-    container_name: "claimant-bot"
-    volumes:
-      - ./.env-dev:/claimant/.env-dev
+#  bot:
+#    image: "claimant-bot:dev"
+#    container_name: "claimant-bot"
+#    volumes:
+#      - ./.env-dev:/claimant/.env-dev
 
-#  bot-fsm-storage:
+  clear-db-daemon:
+    image: "clear-db-daemon:latest"
+    container_name: "clear-db-daemon"
+    environment:
+      DELAY_SEC: 7200
+      DATA_LIFETIME_H: 2
+    volumes:
+      - ./.env:/clear_db_daemon/.env
+    restart: always
+    depends_on:
+      - bot-db
+
+  #  bot-fsm-storage:
 #    image: "redis:alpine"
 #    container_name: "bot-fsm-storage"
 #    ports:
