@@ -44,7 +44,7 @@ services:
       MONGO_INITDB_PASSWORD: ${MONGO_INITDB_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
     ports:
-      - "${MONGO_PORT}:27017"
+      - "127.0.0.1:${MONGO_PORT}:${MONGO_PORT}"
     volumes:
       - ./bot-db:/data/db
       - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh

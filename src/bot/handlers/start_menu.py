@@ -22,6 +22,10 @@ async def show_bot_info(message: types.Message):
     bot_info: str = """
 Это бот, который поможет вам составить исковое заявление в суд по нарушениям трудового законодательства.
 
+Поддерживаемые команды:
+/start - перейти в главное меню
+/help - узнать информацию о боте
+
 Мы должны предупредить вас об обработке персональных данных, в соответствии с ФЗ "О персональных данных". Если вы согласны, просто продолжайте работу с ботом в основном меню.
 
 Зачем бот собирает данные: 
@@ -61,7 +65,7 @@ async def choose_claim_part(message: types.Message):
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start_menu, commands=["start"], state="*")
     dp.register_message_handler(start_menu, filters.Regexp(f"^{emojis.left_arrow} назад"))
-    dp.register_message_handler(show_bot_info, filters.Regexp(f"^{emojis.bookmark_tabs} узнать о боте$"))
+    dp.register_message_handler(show_bot_info, filters.Regexp(f"(^{emojis.bookmark_tabs} узнать о боте$|/help)"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.left_arrow} к шаблонам"))
 

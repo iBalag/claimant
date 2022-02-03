@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from aiogram import types, Dispatcher, filters
 from aiogram.dispatcher import FSMContext
@@ -7,7 +7,8 @@ from aiogram.types import ReplyKeyboardMarkup
 
 from handlers.common_actions_handlers import process_manual_enter, process_option_selection, \
     process_complete_part_editing, claim_tmp_option_chosen, show_claim_tmp_example
-from keyboards import emojis, get_common_start_kb, get_next_actions_kb
+from keyboards import emojis, get_common_start_kb, get_next_actions_kb, get_claim_parts_kb
+from repository import Repository
 
 CLAIM_PART: str = "essence"
 
@@ -18,6 +19,16 @@ class EssencePart(StatesGroup):
 
 
 async def essence_start(message: types.Message):
+    repository: Repository = Repository()
+    claim_data: dict = repository.get_claim_data(message.from_user.id)
+    required_parts: List[str] = ["story"]
+    if claim_data.get("claim_data") is None or \
+            not any([part_name in claim_data["claim_data"].keys() for part_name in required_parts]):
+        claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
+        await message.reply("Пожалуйста, сперва заполните раздел 'фабула'.",
+                            reply_markup=claim_parts_kb)
+        return
+
     await EssencePart.waiting_for_user_action.set()
     start_kb: ReplyKeyboardMarkup = get_common_start_kb()
     await message.reply("Опишите суть нарушения. "
