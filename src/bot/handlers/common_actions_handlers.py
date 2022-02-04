@@ -7,6 +7,7 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboa
     InlineKeyboardMarkup
 
 from common import calc_oof_profit
+from common.oof_profit_calculator import OOFCalculation
 from keyboards import get_next_actions_kb, example_btn, get_claim_parts_kb, emojis
 from repository import Repository
 
@@ -139,8 +140,8 @@ def get_placeholders(claim_data: dict) -> dict:
         placeholders["avr_salary"] = avr_salary
         start_oof_date: datetime = end_work_date + timedelta(days=1)
         placeholders["start_oof_date"] = start_oof_date.strftime("%d.%m.%Y")
-        oof_profit, oof_days, _, _ = calc_oof_profit(start_oof_date, current_date, avr_salary)
-        placeholders["oof_days"] = oof_days
-        placeholders["oof_profit"] = oof_profit
+        oof_profit_calc: OOFCalculation = calc_oof_profit(start_oof_date, current_date, avr_salary)
+        placeholders["oof_days"] = oof_profit_calc.oof_days
+        placeholders["oof_profit"] = oof_profit_calc.oof_profit
 
     return placeholders

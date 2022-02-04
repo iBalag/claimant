@@ -7,6 +7,7 @@ from docx.shared import Inches, Pt
 from docx.text.paragraph import Paragraph
 
 from common import calc_oof_profit
+from common.oof_profit_calculator import OOFCalculation
 from repository import Repository
 
 
@@ -40,9 +41,7 @@ def convert_to_doc(data: dict) -> Document:
 
     # essence
     essence: Paragraph = claim_doc.add_paragraph()
-    essence.add_run("Считаю, что мои права нарушены, поскольку: ")
     essence_options: List[str] = data["claim_data"]["essence"]["chosen_options"]
-    essence_options[0] = essence_options[0][0].lower() + essence_options[0][1:]
     essence.add_run(", ".join(essence_options))
     essence.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
     essence.paragraph_format.first_line_indent = Inches(0.5)
@@ -142,8 +141,7 @@ def get_oof_profit_calculation(claim_data: dict) -> Document:
     end_work_date: datetime = claim_data["story"]["end_work_date"]
     start_oof_date: datetime = end_work_date + timedelta(days=1)
     avr_salary = claim_data["story"]["avr_salary"]
-    oof_profit, oof_days, months_diff, first_month_days_off = calc_oof_profit(start_oof_date, datetime.now(),
-                                                                              avr_salary)
+    oof_profit_calc: OOFCalculation = calc_oof_profit(start_oof_date, datetime.now(), avr_salary)
 
     calc_doc: Document = Document()
 
@@ -174,14 +172,17 @@ def get_oof_profit_calculation(claim_data: dict) -> Document:
         f"Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}\n"
         f"Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}\n"
         f"Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}\n"
-        f"Число рабочих дней за время первого месяца вынужденного прогула: {first_month_days_off}\n"
-        f"Число месяцев за время вынужденного прогула: {months_diff}\n"
-        f"Число рабочих дней за время вынужденного прогула: {months_diff} * 20 + {first_month_days_off} = {oof_days}\n\n"
+        f"Число рабочих дней за время первого месяца вынужденного прогула: {oof_profit_calc.first_month_days_oof}\n"
+        f"Число полных месяцев за время вынужденного прогула: {oof_profit_calc.oof_months}\n"
+        f"Число рабочих дней вынужденного прогула в текущем месяце: {oof_profit_calc.current_month_days_oof}\n"
+        f"Число рабочих дней за время вынужденного прогула: {oof_profit_calc.oof_months} * 20 + "
+        f"{oof_profit_calc.first_month_days_oof} + {oof_profit_calc.current_month_days_oof} = "
+        f"{oof_profit_calc.oof_days}\n\n"
     )
 
     oof_profit_title_font = calc.add_run("Сумма задолженности за время вынужденного прогула\n").font
     oof_profit_title_font.bold = True
     calc.add_run("{средний заработок за день} * {Число рабочих дней за время вынужденного прогула} = "
-                 f"{oof_days} * {avr_salary/20} = {oof_profit}")
+                 f"{oof_profit_calc.oof_days} * {avr_salary/20} = {oof_profit_calc.oof_profit}")
 
     return calc_doc
