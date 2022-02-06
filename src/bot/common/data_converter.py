@@ -81,12 +81,16 @@ def convert_to_doc(data: dict) -> Document:
 
     # footer
     footer: Paragraph = claim_doc.add_paragraph()
-    short_user_name: str = get_short_user_name(data['claim_data']['head']['user_name'])
-    claim_date: datetime = datetime.now()
-    footer.text = f"{claim_date.strftime('%d.%m.%Y'): <50}{short_user_name}"
+    footer.text = get_footer_text(data["claim_data"]["head"])
     footer.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
 
     return claim_doc
+
+
+def get_footer_text(head_data: dict) -> str:
+    short_user_name: str = get_short_user_name(head_data['user_name'])
+    claim_date: datetime = datetime.now()
+    return f"{claim_date.strftime('%d.%m.%Y'): <50}{short_user_name}"
 
 
 def get_head_text(head_data: dict) -> str:
@@ -168,21 +172,44 @@ def get_oof_profit_calculation(claim_data: dict) -> Document:
 
     day_oof_title_font = calc.add_run("Время вынужденного прогула\n").font
     day_oof_title_font.bold = True
-    calc.add_run(
-        f"Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}\n"
-        f"Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}\n"
-        f"Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}\n"
-        f"Число рабочих дней за время первого месяца вынужденного прогула: {oof_profit_calc.first_month_days_oof}\n"
-        f"Число полных месяцев за время вынужденного прогула: {oof_profit_calc.oof_months}\n"
-        f"Число рабочих дней вынужденного прогула в текущем месяце: {oof_profit_calc.current_month_days_oof}\n"
-        f"Число рабочих дней за время вынужденного прогула: {oof_profit_calc.oof_months} * 20 + "
-        f"{oof_profit_calc.first_month_days_oof} + {oof_profit_calc.current_month_days_oof} = "
-        f"{oof_profit_calc.oof_days}\n\n"
-    )
+    if oof_profit_calc.first_month_days_oof > 0 and oof_profit_calc.oof_months > 0:
+        calc.add_run(
+            f"Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}\n"
+            f"Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}\n"
+            f"Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}\n"
+            f"Число рабочих дней за время первого месяца вынужденного прогула: {oof_profit_calc.first_month_days_oof}\n"
+            f"Число полных месяцев за время вынужденного прогула: {oof_profit_calc.oof_months}\n"
+            f"Число рабочих дней вынужденного прогула в текущем месяце: {oof_profit_calc.current_month_days_oof}\n"
+            f"Число рабочих дней за время вынужденного прогула: {oof_profit_calc.oof_months} * 20 + "
+            f"{oof_profit_calc.first_month_days_oof} + {oof_profit_calc.current_month_days_oof} = "
+            f"{oof_profit_calc.oof_days}\n\n"
+        )
+    elif oof_profit_calc.first_month_days_oof > 0 and oof_profit_calc.oof_months == 0:
+        calc.add_run(
+            f"Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}\n"
+            f"Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}\n"
+            f"Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}\n"
+            f"Число рабочих дней за время первого месяца вынужденного прогула: {oof_profit_calc.first_month_days_oof}\n"
+            f"Число рабочих дней вынужденного прогула в текущем месяце: {oof_profit_calc.current_month_days_oof}\n"
+            f"Число рабочих дней за время вынужденного прогула: {oof_profit_calc.first_month_days_oof} + "
+            f"{oof_profit_calc.current_month_days_oof} = {oof_profit_calc.oof_days}\n\n"
+        )
+    elif oof_profit_calc.first_month_days_oof == 0:
+        calc.add_run(
+            f"Дата увольнения: {end_work_date.strftime('%d.%m.%Y')}\n"
+            f"Дата начала вынужденного прогула: {start_oof_date.strftime('%d.%m.%Y')}\n"
+            f"Дата подачи искового заявления: {datetime.now().strftime('%d.%m.%Y')}\n"
+            f"Число рабочих дней вынужденного прогула в текущем месяце: {oof_profit_calc.current_month_days_oof}\n"
+            f"Число рабочих дней за время вынужденного прогула: {oof_profit_calc.oof_days}\n\n"
+        )
 
     oof_profit_title_font = calc.add_run("Сумма задолженности за время вынужденного прогула\n").font
     oof_profit_title_font.bold = True
     calc.add_run("{средний заработок за день} * {Число рабочих дней за время вынужденного прогула} = "
-                 f"{oof_profit_calc.oof_days} * {avr_salary/20} = {oof_profit_calc.oof_profit}")
+                 f"{oof_profit_calc.oof_days} * {avr_salary/20} = {oof_profit_calc.oof_profit}\n")
+
+    footer: Paragraph = calc_doc.add_paragraph()
+    footer.text = get_footer_text(claim_data["head"])
+    footer.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
 
     return calc_doc

@@ -34,12 +34,16 @@ async def header_start(message: types.Message):
                         "- Наименование и адрес суда\n"
                         "- Наименование и адрес ответчика\n")
     await message.answer("Внимание! Поиск подходящего суда будет происходить по адресу истца.")
-    await message.answer("Введите свои ФИО", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Введите свои ФИО. Например: Иванов Сергей Владимирович", reply_markup=ReplyKeyboardRemove())
     await HeadPart.waiting_for_user_name.set()
 
 
 async def user_name_chosen(message: types.Message, state: FSMContext):
     user_name: Optional[str] = message.text
+    if len(user_name.split(" ")) != 3:
+        await message.reply("ФИО введено неверно. Должно быть 3 слова. Попробуйте еще раз.",
+                            reply_markup=ReplyKeyboardRemove())
+        return
     await state.update_data(user_name=user_name)
     await HeadPart.waiting_for_user_post_code.set()
     await message.answer("Введите свой почтовый индекс", reply_markup=ReplyKeyboardRemove())
@@ -132,10 +136,6 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
         ), parse_mode="HTML")
 
     await HeadPart.waiting_for_court_chosen.set()
-    # court_options: List[str] = [str(i) for i in list(range(1, len(court_info) + 1))]
-    # await message.answer(f"Выберите подходящий суд для подачи заявления: "
-    #                      f"{', '.join(court_options)}",
-    #                      reply_markup=ReplyKeyboardRemove())
 
     court_options_kb = InlineKeyboardMarkup()
     for i in range(len(court_info)):

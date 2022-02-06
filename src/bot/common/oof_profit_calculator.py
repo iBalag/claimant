@@ -39,7 +39,6 @@ def calc_oof_profit(start_oof_date: datetime, current_date: datetime, avr_salary
     months_diff: int = calc_months_diff(start_oof_date, current_date)
     oof_months = 0
     first_month_days_oof = 0
-    current_month_days_oof = 0
     if months_diff > 0:
         _, first_oof_month_days = monthrange(start_oof_date.year, start_oof_date.month)
         first_month_days_oof: int = calc_work_days_in_month(start_oof_date.day, start_oof_date.weekday(),
@@ -49,8 +48,10 @@ def calc_oof_profit(start_oof_date: datetime, current_date: datetime, avr_salary
         oof_months = months_diff - 1
         oof_days = oof_months * WORK_DAYS_PER_MONTH + first_month_days_oof + current_month_days_oof
     else:
-        oof_days = calc_work_days_in_month(start_oof_date.day, start_oof_date.weekday(),
-                                           current_date.day)
+        current_month_days_oof = calc_work_days_in_month(start_oof_date.day, start_oof_date.weekday(),
+                                                         current_date.day)
+        oof_days = current_month_days_oof
+
     oof_profit = oof_days * avr_payment_day
     return OOFCalculation(
         oof_profit=round(oof_profit, 2),
