@@ -123,7 +123,9 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
         ), parse_mode="HTML")
         await state.update_data(chosen_court=court_info[0])
         await HeadPart.waiting_for_employer_name.set()
-        await message.answer("Введите название организации, в которой вы работаете")
+        await message.answer("Введите название организации и её ИНН, в которой вы работаете. "
+                             "Если не знаете ИНН, введите просто название.\n"
+                             "Например: OOO \"Рога и Копыта\" (ИНН 555555555555)")
         return
 
     await state.update_data(court_info=court_info)
