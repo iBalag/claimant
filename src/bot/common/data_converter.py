@@ -94,6 +94,7 @@ def get_footer_text(head_data: dict) -> str:
 
 
 def get_head_text(head_data: dict) -> str:
+    full_employer_name: str = get_full_employee_name(head_data)
     lines = [
         f"В {head_data['chosen_court'][0]}",
         f"Адрес: {head_data['chosen_court'][1]}",
@@ -103,8 +104,7 @@ def get_head_text(head_data: dict) -> str:
         f"ул. {head_data['chosen_street']}, д. {head_data['house_chosen']}"
         f"{', кв. ' + head_data['apartment_chosen'] if head_data['apartment_chosen'] != '' else ''}",
         "",
-        f"Ответчик: {head_data['chosen_employer_name']}" +
-        f" (ИНН {head_data['inn']})" if head_data.get("inn") is not None else '',
+        f"Ответчик: {full_employer_name}",
         f"Адрес: {head_data['chosen_employer_address']}"
     ]
 
@@ -112,8 +112,7 @@ def get_head_text(head_data: dict) -> str:
 
 
 def get_story_parts(data: dict) -> List[str]:
-    full_employer_name: str = data["head"]["chosen_employer_name"] + \
-        f" (ИНН {data['head']['inn']})" if data["head"].get("inn") is not None else ""
+    full_employer_name: str = get_full_employee_name(data["head"])
     lines = [
         f"Я, {data['head']['user_name']}, работал {data['story']['user_position']} в {full_employer_name} "
         f"с {data['story']['start_work_date'].strftime('%d.%m.%Y')} на основании трудового договора, "
@@ -125,6 +124,13 @@ def get_story_parts(data: dict) -> List[str]:
     if data["story"]["user_employer_discussion"] != "":
         lines.append(data["story"]["user_employer_discussion"])
     return lines
+
+
+def get_full_employee_name(head_data: dict) -> str:
+    if head_data.get("inn") is None:
+        return head_data["chosen_employer_name"]
+    else:
+        return f"{head_data['chosen_employer_name']} (ИНН {head_data['inn']})"
 
 
 def get_law_text(claim_theme: str) -> str:
