@@ -26,6 +26,9 @@ async def download_doc(message: types.Message):
         claim_doc.save(claim_doc_file)
         claim_doc_file.seek(0)
         claim_doc_file.name = "заявление.docx"
+        await message.answer("Ваше исковое заявление готово!\n"
+                             "Теперь вам нужно правильно его подать и выступить в суде. Узнать эту информацию можно "
+                             "из соответствующих разделов меню.")
         await message.answer(f"{emojis.double_exclamation_mark} Учтите, что заявление было сгенерированно "
                              "автоматически. Пожалуйста, проверьте корректность введенных данных.")
         await message.answer_document(document=claim_doc_file,

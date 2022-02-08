@@ -103,7 +103,7 @@ async def show_claim_tmp_example(message: types.Message, claim_part):
     claim_data = repository.get_claim_data(message.from_user.id, claim_theme)
     placeholders = get_placeholders(claim_data["claim_data"])
     for i, example in enumerate(examples):
-        await message.reply(f"Пример №{i+1}: {example.format(**placeholders)}")
+        await message.reply(f"Пример №{i+1}:\n{example.format(**placeholders)}")
 
     await message.answer("Введите свой вариант самостоятельно. "
                          "Или выберите дальнейшее действие с помощью клавиатуры",
