@@ -56,7 +56,8 @@ async def post_code_chosen(message: types.Message, state: FSMContext):
         await message.reply("Неверный индекс. Введите свой почтовый индекс", reply_markup=ReplyKeyboardRemove())
     await state.update_data(user_post_code=user_post_code)
     await HeadPart.waiting_for_user_city.set()
-    await message.reply("Спасибо, а теперь укажите свой город", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Спасибо, а теперь укажите населённый пункт, в котором вы прописаны.",
+                         reply_markup=ReplyKeyboardRemove())
 
 
 async def city_chosen(message: types.Message, state: FSMContext):
@@ -65,7 +66,7 @@ async def city_chosen(message: types.Message, state: FSMContext):
     await state.update_data(chosen_city=city)
     await HeadPart.waiting_for_user_street.set()
     # TODO: return keyboard with one button 'back'
-    await message.reply("Принято товарищ! А теперь укажите название улицы, на которой вы прописаны",
+    await message.answer("Принято! А теперь укажите название улицы, на которой вы прописаны",
                         reply_markup=ReplyKeyboardRemove())
 
 
@@ -73,17 +74,17 @@ async def street_chosen(message: types.Message, state: FSMContext):
     street: Optional[str] = message.text
     await state.update_data(chosen_street=street)
     await HeadPart.waiting_for_user_house.set()
-    await message.reply("Принято товарищ! А теперь введи номер своего дома",
-                        reply_markup=ReplyKeyboardRemove())
+    await message.answer("Принято! А теперь введите номер своего дома",
+                         reply_markup=ReplyKeyboardRemove())
 
 
 async def house_chosen(message: types.Message, state: FSMContext):
     house: Optional[str] = message.text
     await state.update_data(house_chosen=house)
     await HeadPart.waiting_for_user_apartment.set()
-    await message.reply("Принято товарищ! А теперь введи номер своей квартиры. "
-                        "Если ты живешь в частном доме, просто ответь: нет",
-                        reply_markup=ReplyKeyboardRemove())
+    await message.answer("Принято! А теперь введите номер своей квартиры. "
+                         "Если вы живёте в частном доме, просто введите: нет",
+                         reply_markup=ReplyKeyboardRemove())
 
 
 async def apartment_chosen(message: types.Message, state: FSMContext):
@@ -92,7 +93,7 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
         await state.update_data(apartment_chosen="")
     elif not apartment.isdigit():
         await message.reply("Номер дома нужно указать цифрой. "
-                            "Если ты живешь в частном доме, просто ответь: нет",
+                            "Если вы живёте в частном доме, просто введите: нет",
                             reply_markup=ReplyKeyboardRemove())
         return
     else:
@@ -103,13 +104,14 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
     court_info: List[CourtInfo] = await resolve_court_address(city=user_data["chosen_city"],
                                                               court_subj=region_code, street=user_data["chosen_street"])
     if len(court_info) == 0:
-        chose_another_city_btn = KeyboardButton(f"{emojis.compass} выбрать другой город")
+        chose_another_city_btn = KeyboardButton(f"{emojis.compass} выбрать другой населённый пункт")
         enter_court_btn = KeyboardButton(f"{emojis.face_with_monocle} указать суд самостоятельно")
         options_kb = ReplyKeyboardMarkup(resize_keyboard=True)
         options_kb.row(chose_another_city_btn, enter_court_btn)
         await HeadPart.waiting_for_option_chosen.set()
-        await message.reply(f"Для данного города '{user_data['chosen_city']}' и улицы '{user_data['chosen_street']}' "
-                            f"не найдено суда. Пожалуйста, выберите одну из следующий опций:",
+        await message.reply(f"Для данного населённого пункта '{user_data['chosen_city']}' и улицы "
+                            f"'{user_data['chosen_street']}' не найдено суда. "
+                            "Пожалуйста, выберите одну из следующий опций:",
                             reply_markup=options_kb)
         return
 
@@ -149,9 +151,9 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
 
 async def option_chosen(message: types.Message, state: FSMContext):
     option: Optional[str] = message.text
-    if option.endswith("выбрать другой город"):
+    if option.endswith("выбрать другой населённый пункт"):
         await HeadPart.waiting_for_user_city.set()
-        await message.answer("Укажите свой город", reply_markup=ReplyKeyboardRemove())
+        await message.answer("Укажите населённый пункт, в котором вы прописаны", reply_markup=ReplyKeyboardRemove())
         return
     if option.endswith("указать суд самостоятельно"):
         await HeadPart.waiting_for_court_entered.set()
@@ -198,9 +200,9 @@ async def employer_name_chosen(message: types.Message, state: FSMContext):
         await state.update_data(inn=inn_match.group(0))
 
     await HeadPart.waiting_for_employer_address.set()
-    await message.reply("Принято товарищ! А теперь введи адрес организации, в которой вы работаете. "
-                        "Например: 101002, г. Любой, ул. Любая, д.4",
-                        reply_markup=ReplyKeyboardRemove())
+    await message.answer("Принято! А теперь введите адрес организации, в которой вы работаете.\n"
+                         "Например: 101002, г. Любой, ул. Любая, д.4",
+                         reply_markup=ReplyKeyboardRemove())
 
 
 async def employer_address_chosen(message: types.Message, state: FSMContext):
