@@ -1,6 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Set, Callable
 
 from bson import ObjectId
+from cryptography.fernet import Fernet
+
 from dotenv import dotenv_values
 from pymongo import MongoClient
 
@@ -15,6 +17,10 @@ class Repository:
             self.config = dotenv_values(".env-dev")
 
         self.db_name: str = self.config["MONGO_INITDB_DATABASE"]
+        self.key: str = self.config["ENCRYPT_KEY"]
+        self.fernet: Fernet = Fernet(self.key)
+        self.sensitive_fields: Set[str] = {"user_name", "user_post_code", "chosen_city", "chosen_street",
+                                           "house_chosen", "apartment_chosen"}
 
     def _get_mongo_client(self):
         return MongoClient(
@@ -25,6 +31,20 @@ class Repository:
             authSource=self.db_name,
             authMechanism="SCRAM-SHA-256"
         )
+
+    def encrypt(self, value: str) -> str:
+        return self.fernet.encrypt(value.encode()).decode()
+
+    def decrypt(self, value: str) -> str:
+        return self.fernet.decrypt(value.encode()).decode()
+
+    def process_data(self, data: dict, processor: Callable[[str], str]) -> dict:
+        for key, value in data.items():
+            if key in self.sensitive_fields and isinstance(value, str):
+                data[key] = processor(value)
+            if isinstance(value, dict):
+                data[key] = self.process_data(value, processor)
+        return data
 
     def get_tmps_list(self) -> List[str]:
         with self._get_mongo_client() as client:
@@ -40,8 +60,9 @@ class Repository:
             return "-1"
 
     def insert_item(self, collection_name: str, item: dict):
+        encrypted_item: dict = self.process_data(item, self.encrypt)
         with self._get_mongo_client() as client:
-            client[self.db_name][collection_name].insert_one(item)
+            client[self.db_name][collection_name].insert_one(encrypted_item)
 
     def remove_item(self, collection_name: str, item_id: ObjectId):
         with self._get_mongo_client() as client:
@@ -53,19 +74,24 @@ class Repository:
             find_filter.update(**{"claim_theme": claim_theme})
 
         with self._get_mongo_client() as client:
-            result = list(client[self.db_name]["claim-data"].find(find_filter))
+            search_result = list(client[self.db_name]["claim-data"].find(find_filter))
             # there can be only one :)
-            if len(result) == 1:
-                return result[0]
-            if len(result) == 0:
+            result: dict
+            if len(search_result) == 1:
+                result = search_result[0]
+            if len(search_result) == 0:
                 return None
-            if len(result) > 1:
+            if len(search_result) > 1:
                 # TODO: how to hande this? Take latest?
-                return result[0]
+                result = search_result[0]
+
+            decrypted_item: dict = self.process_data(result, self.decrypt)
+            return decrypted_item
 
     def update_record(self, collection_name: str, item_id: ObjectId, new_value: dict):
+        encrypted_value: dict = self.process_data(new_value, self.encrypt)
         with self._get_mongo_client() as client:
-            client[self.db_name][collection_name].update_one({"_id": item_id}, {"$set": new_value}, upsert=False)
+            client[self.db_name][collection_name].update_one({"_id": item_id}, {"$set": encrypted_value}, upsert=False)
 
     def get_current_claim_theme(self, user_id: int) -> Optional[str]:
         result = self.get_claim_data(user_id)
