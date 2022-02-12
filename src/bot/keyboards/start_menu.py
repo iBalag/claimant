@@ -7,8 +7,13 @@ from keyboards import emojis
 def get_start_menu_kb() -> ReplyKeyboardMarkup:
     info_btn = KeyboardButton(f"{emojis.bookmark_tabs} узнать о боте")
     choose_claim_tmp_btn = KeyboardButton(f"{emojis.fist} выбор операции")
+    claim_sanding_btn = KeyboardButton(f"{emojis.incoming_envelope} подача заявления")
+    claim_tracking_btn = KeyboardButton(f"{emojis.magnifying_glass_tilted_left} отслеживание заявления")
+    court_appearance_btn = KeyboardButton(f"{emojis.man_judge} выступление в суде")
     start_menu_kb = ReplyKeyboardMarkup(resize_keyboard=True)
     start_menu_kb.row(choose_claim_tmp_btn, info_btn)
+    start_menu_kb.row(claim_sanding_btn, claim_tracking_btn)
+    start_menu_kb.row(court_appearance_btn)
     return start_menu_kb
 
 
