@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
 
+import pymorphy2
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import Inches, Pt
@@ -113,10 +114,12 @@ def get_head_text(head_data: dict) -> str:
 
 def get_story_parts(data: dict) -> List[str]:
     full_employer_name: str = get_full_employee_name(data["head"])
+    inflected_position_ablt: str = inflect(data["story"]["user_position"], "ablt")
+    inflected_position_gent: str = inflect(data["story"]["user_position"], "gent")
     lines = [
-        f"Я, {data['head']['user_name']}, работал {data['story']['user_position']} в {full_employer_name} "
+        f"Я, {data['head']['user_name']}, работал {inflected_position_ablt} в {full_employer_name} "
         f"с {data['story']['start_work_date'].strftime('%d.%m.%Y')} на основании трудового договора, "
-        f"в соответствии с которым был принят на работу к ответчику на должность {data['story']['user_position']} "
+        f"в соответствии с которым был принят на работу к ответчику на должность {inflected_position_gent} "
         f"с окладом {data['story']['user_salary']} рублей.",
         data["story"]["story_conflict"]
     ]
@@ -219,3 +222,10 @@ def get_oof_profit_calculation(claim_data: dict) -> Document:
     footer.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
 
     return calc_doc
+
+
+def inflect(word: str, case: str) -> str:
+    morph = pymorphy2.MorphAnalyzer()
+    word_analysis = morph.parse(word)[0]
+    word_in_case = word_analysis.inflect({case})
+    return word_in_case.word

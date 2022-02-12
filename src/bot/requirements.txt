@@ -8,3 +8,4 @@ pytz
 aioredis
 python-docx
 cryptography==3.4.8
+pymorphy2
