@@ -6,7 +6,7 @@ from aiogram.dispatcher import filters
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from common.data_converter import convert_to_doc, get_oof_profit_calculation
-from keyboards import emojis
+from keyboards import emojis, get_start_menu_kb
 from keyboards.claim_parts import PART_NAMES, get_claim_parts_kb
 from repository import Repository
 from docx.document import Document
@@ -52,6 +52,9 @@ async def download_doc(message: types.Message):
     previous_claim_data: Optional[dict] = repository.get_claim_data(message.from_user.id, claim_data["claim_theme"])
     if previous_claim_data is not None:
         repository.remove_item("claim-data", previous_claim_data["_id"])
+
+    start_menu_kb: ReplyKeyboardMarkup = get_start_menu_kb()
+    await message.answer("Выберите одну из следующих команд:", reply_markup=start_menu_kb)
 
 
 def register_handlers(dp: Dispatcher):
