@@ -176,8 +176,19 @@ async def show_example(message: types.Message, state: FSMContext):
         await message.reply("Для данной части фабулы не найдено примера.")
         return
 
+    user_data = await state.get_data()
+    placeholders: dict = get_placeholders(user_data)
     example: str = story_examples[example_index]
+    example = example.format(**placeholders)
     await message.reply(example)
+
+
+def get_placeholders(story_data: dict) -> dict:
+    placeholders = {}
+    if "end_work_date" in story_data.keys():
+        placeholders["end_work_date"] = story_data["end_work_date"].strftime("%d.%m.%Y")
+
+    return placeholders
 
 
 def register_handlers(dp: Dispatcher):

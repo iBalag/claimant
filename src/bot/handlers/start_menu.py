@@ -4,7 +4,7 @@ from typing import List, Optional
 import pytz
 from aiogram import types, Dispatcher, filters
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ReplyKeyboardMarkup
+from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 from repository import Repository
 from keyboards import get_start_menu_kb, get_claim_tmps_list_kb, get_claim_parts_kb, emojis
@@ -17,7 +17,10 @@ async def start_menu(message: types.Message, state: FSMContext):
     await message.reply("Добрый день! Выберите одну из следующих команд:", reply_markup=start_menu_kb)
 
 
-async def show_bot_info(message: types.Message):
+async def show_bot_info(message: types.Message, state: FSMContext):
+    if state is not None:
+        await state.finish()
+
     start_menu_kb: ReplyKeyboardMarkup = get_start_menu_kb()
     bot_info: str = """
 Это бот, который поможет вам составить исковое заявление в суд по нарушениям трудового законодательства.
@@ -25,6 +28,10 @@ async def show_bot_info(message: types.Message):
 Поддерживаемые команды:
 /start - перейти в главное меню
 /help - узнать информацию о боте
+/choose_template - выбрать шаблон искового для заполнения
+/sending - узнать про отправку искового
+/tracking - узнать, как отслеживать исковое
+/presentation - узнать, как выступать в суде
 
 Мы должны предупредить вас об обработке персональных данных, в соответствии с ФЗ "О персональных данных". Если вы согласны, просто продолжайте работу с ботом в основном меню.
 
@@ -35,15 +42,24 @@ async def show_bot_info(message: types.Message):
 Как бот хранит и уничтожает данные: ваши персональные данные будут храниться в зашифрованном виде в базе данных бота во время сессии заполнения заявления. 
 Как только вы нажмёте кнопку "получить" - данные стираются полностью. Если вы выйдите из сессии, и при этом не нажмете кнопку "получить", данные также сотрутся автоматически через два часа.
     """
-    await message.reply(bot_info, reply_markup=start_menu_kb)
+    infi_kb = InlineKeyboardMarkup(row_width=1)
+    infi_kb.add(InlineKeyboardButton("Видеоинструкция к боту", url="https://www.youtube.com/watch?v=nNVZE0Ay8LQ"))
+    await message.reply(bot_info, reply_markup=infi_kb)
+    await message.answer("Выберите одну из следующих команд:", reply_markup=start_menu_kb)
 
 
-async def choose_claim_tmp(message: types.Message):
+async def choose_claim_tmp(message: types.Message, state: FSMContext):
+    if state is not None:
+        await state.finish()
+
     claim_tmps_list_kb: ReplyKeyboardMarkup = get_claim_tmps_list_kb()
     await message.reply("Выберите один из шаблонов для заполнения", reply_markup=claim_tmps_list_kb)
 
 
-async def choose_claim_part(message: types.Message):
+async def choose_claim_part(message: types.Message, state: FSMContext):
+    if state is not None:
+        await state.finish()
+
     # This is the first time when the user chose the claim template.
     temp_theme_raw: str = message.text
     temp_theme: str = temp_theme_raw.replace(emojis.page_facing_up, "").strip()
@@ -62,7 +78,10 @@ async def choose_claim_part(message: types.Message):
     await message.reply("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
 
 
-async def choose_claim_sanding(message: types.Message):
+async def choose_claim_sending(message: types.Message, state: FSMContext):
+    if state is not None:
+        await state.finish()
+
     start_menu_kb: ReplyKeyboardMarkup = get_start_menu_kb()
     claim_sanding_info: str = """
 Чтобы подать заявление, нужно:
@@ -79,7 +98,10 @@ async def choose_claim_sanding(message: types.Message):
     await message.reply(claim_sanding_info, reply_markup=start_menu_kb)
 
 
-async def choose_claim_tracking(message: types.Message):
+async def choose_claim_tracking(message: types.Message, state: FSMContext):
+    if state is not None:
+        await state.finish()
+
     start_menu_kb: ReplyKeyboardMarkup = get_start_menu_kb()
     claim_tracking_info: str = """
 Отслеживать движение поданного заявления можно следующим образом:
@@ -94,7 +116,10 @@ async def choose_claim_tracking(message: types.Message):
     await message.reply(claim_tracking_info, reply_markup=start_menu_kb)
 
 
-async def choose_court_appearance(message: types.Message):
+async def choose_court_presentation(message: types.Message, state: FSMContext):
+    if state is not None:
+        await state.finish()
+
     start_menu_kb: ReplyKeyboardMarkup = get_start_menu_kb()
     court_appearance_info: str = """
 Как вести себя в суде:
@@ -116,12 +141,15 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start_menu, commands=["start"], state="*")
     dp.register_message_handler(start_menu, filters.Regexp(f"^{emojis.left_arrow} назад"))
     dp.register_message_handler(show_bot_info, filters.Regexp(f"(^{emojis.bookmark_tabs} узнать о боте$|/help)"))
-    dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции"))
+    dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции|/choose_template"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.left_arrow} к шаблонам"))
-    dp.register_message_handler(choose_claim_sanding, filters.Regexp(f"^{emojis.incoming_envelope} подача заявления"))
+    dp.register_message_handler(choose_claim_sending,
+                                filters.Regexp(f"^{emojis.incoming_envelope} подача заявления|/sending"))
     dp.register_message_handler(choose_claim_tracking,
-                                filters.Regexp(f"^{emojis.magnifying_glass_tilted_left} отслеживание заявления"))
-    dp.register_message_handler(choose_court_appearance, filters.Regexp(f"^{emojis.man_judge} выступление в суде"))
+                                filters.Regexp(
+                                    f"^{emojis.magnifying_glass_tilted_left} отслеживание заявления|/tracking"))
+    dp.register_message_handler(choose_court_presentation,
+                                filters.Regexp(f"^{emojis.man_judge} выступление в суде|/presentation"))
 
     repository: Repository = Repository()
     tmp_names: List[str] = repository.get_tmps_list()
