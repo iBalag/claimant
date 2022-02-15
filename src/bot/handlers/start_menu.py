@@ -8,7 +8,7 @@ from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeybo
 
 from repository import Repository
 from keyboards import get_start_menu_kb, get_claim_tmps_list_kb, get_claim_parts_kb, emojis
-from statistics import collect_statistic
+from statistics import collect_statistic, count_event
 
 
 @collect_statistic(event_name="start:start_menu")
@@ -78,6 +78,12 @@ async def choose_claim_part(message: types.Message, state: FSMContext):
         "created": datetime.utcnow().replace(tzinfo=pytz.UTC)
     }
     repository.insert_item("claim-data", new_claim_data)
+
+    try:
+        count_event(f"claim_template:{temp_theme}", message.from_user.id)
+    except Exception as ex:
+        print(f"Error occurred while collection statistics: {ex}")
+
     claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
     await message.reply("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
 
