@@ -9,6 +9,7 @@ from handlers.common_actions_handlers import process_manual_enter, process_optio
     process_complete_part_editing, claim_tmp_option_chosen, show_claim_tmp_example
 from keyboards import emojis, get_common_start_kb, get_next_actions_kb, get_claim_parts_kb
 from repository import Repository
+from statistics import collect_statistic
 
 CLAIM_PART: str = "essence"
 
@@ -18,7 +19,8 @@ class EssencePart(StatesGroup):
     waiting_for_option_chosen = State()
 
 
-async def essence_start(message: types.Message):
+@collect_statistic(event_name="essence:start")
+async def essence_start(message: types.Message, state: FSMContext):
     repository: Repository = Repository()
     claim_data: dict = repository.get_claim_data(message.from_user.id)
     required_parts: List[str] = ["story"]
@@ -37,6 +39,7 @@ async def essence_start(message: types.Message):
                         reply_markup=start_kb)
 
 
+@collect_statistic(event_name="essence:show_example")
 async def show_example(message: types.Message, state: FSMContext):
     await show_claim_tmp_example(message, CLAIM_PART)
 

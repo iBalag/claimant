@@ -12,6 +12,7 @@ from common.oof_profit_calculator import OOFCalculation
 from handlers.common_actions_handlers import process_complete_part_editing
 from keyboards import emojis, get_claim_parts_kb
 from repository import Repository
+from statistics import collect_statistic
 
 CLAIM_PART: str = "claims"
 
@@ -20,6 +21,7 @@ class ClaimsPart(StatesGroup):
     waiting_for_optional_claim = State()
 
 
+@collect_statistic(event_name="claims:start")
 async def claims_start(message: types.Message, state: FSMContext):
     repository: Repository = Repository()
     claim_data: dict = repository.get_claim_data(message.from_user.id)
@@ -56,6 +58,7 @@ async def process_claim_options(claim_theme: str, options: Optional[List[str]], 
     await message.answer("Хотите добавить требование про взыскание морального вреда?", reply_markup=option_kb)
 
 
+@collect_statistic(event_name="claims:optional_claim_selected")
 async def optional_claim_selected(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     selected_options = user_data["claims"]

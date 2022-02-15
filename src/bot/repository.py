@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Set, Callable
 
 from bson import ObjectId
@@ -132,3 +133,15 @@ class Repository:
         if claim_tmp is not None and part in claim_tmp.keys() and "actions" in claim_tmp[part].keys():
             actions = claim_tmp[part]["actions"]
         return actions
+
+    def get_statistics(self, date: datetime) -> Optional[dict]:
+        with self._get_mongo_client() as client:
+            result = list(client[self.db_name]["statistics"].find({"date": date}))
+            # there can be only one :)
+            if len(result) == 1:
+                return result[0]
+            if len(result) == 0:
+                return None
+            if len(result) > 1:
+                # TODO: how to hande this? Take latest?
+                return result[0]

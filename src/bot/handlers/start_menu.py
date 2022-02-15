@@ -8,8 +8,10 @@ from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeybo
 
 from repository import Repository
 from keyboards import get_start_menu_kb, get_claim_tmps_list_kb, get_claim_parts_kb, emojis
+from statistics import collect_statistic
 
 
+@collect_statistic(event_name="start:start_menu")
 async def start_menu(message: types.Message, state: FSMContext):
     if state is not None:
         await state.finish()
@@ -17,6 +19,7 @@ async def start_menu(message: types.Message, state: FSMContext):
     await message.reply("Добрый день! Выберите одну из следующих команд:", reply_markup=start_menu_kb)
 
 
+@collect_statistic(event_name="start:bot_info")
 async def show_bot_info(message: types.Message, state: FSMContext):
     if state is not None:
         await state.finish()
@@ -48,6 +51,7 @@ async def show_bot_info(message: types.Message, state: FSMContext):
     await message.answer("Выберите одну из следующих команд:", reply_markup=start_menu_kb)
 
 
+@collect_statistic(event_name="start:choose_template")
 async def choose_claim_tmp(message: types.Message, state: FSMContext):
     if state is not None:
         await state.finish()
@@ -78,6 +82,7 @@ async def choose_claim_part(message: types.Message, state: FSMContext):
     await message.reply("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
 
 
+@collect_statistic(event_name="start:claim_sending")
 async def choose_claim_sending(message: types.Message, state: FSMContext):
     if state is not None:
         await state.finish()
@@ -98,6 +103,7 @@ async def choose_claim_sending(message: types.Message, state: FSMContext):
     await message.reply(claim_sanding_info, reply_markup=start_menu_kb)
 
 
+@collect_statistic(event_name="start:claim_tracking")
 async def choose_claim_tracking(message: types.Message, state: FSMContext):
     if state is not None:
         await state.finish()
@@ -116,6 +122,7 @@ async def choose_claim_tracking(message: types.Message, state: FSMContext):
     await message.reply(claim_tracking_info, reply_markup=start_menu_kb)
 
 
+@collect_statistic(event_name="start:claim_presentation")
 async def choose_court_presentation(message: types.Message, state: FSMContext):
     if state is not None:
         await state.finish()

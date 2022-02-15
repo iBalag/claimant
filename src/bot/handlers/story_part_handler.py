@@ -9,6 +9,7 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButt
 from common import telegram_calendar
 from keyboards import emojis, get_claim_parts_kb
 from repository import Repository
+from statistics import collect_statistic
 
 example_btn = KeyboardButton(f"{emojis.red_question_mark} показать пример")
 example_kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -28,7 +29,8 @@ class StoryPart(StatesGroup):
     waiting_for_user_employer_discussion = State()
 
 
-async def story_start(message: types.Message):
+@collect_statistic(event_name="story:start")
+async def story_start(message: types.Message, state: FSMContext):
     await StoryPart.waiting_for_start_work_date.set()
     calendar_kb = telegram_calendar.create_calendar()
     await message.reply("Для заполнения фабулы для начала укажите дату с которой вы работали\\работаете в компании.",
@@ -154,6 +156,7 @@ async def user_employer_discussion_entered(message: types.Message, state: FSMCon
     await message.answer("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
 
 
+@collect_statistic(event_name="story:show_example")
 async def show_example(message: types.Message, state: FSMContext):
     repository: Repository = Repository()
     claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)

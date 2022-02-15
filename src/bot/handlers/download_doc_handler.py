@@ -4,12 +4,13 @@ from typing import Optional, List
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import filters
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from docx.document import Document
 
 from common.data_converter import convert_to_doc, get_oof_profit_calculation
 from keyboards import emojis, get_start_menu_kb
 from keyboards.claim_parts import PART_NAMES, get_claim_parts_kb
 from repository import Repository
-from docx.document import Document
+from statistics import count_event
 
 
 async def download_doc(message: types.Message):
@@ -47,6 +48,11 @@ async def download_doc(message: types.Message):
             await message.answer_document(document=calc_doc_file,
                                           disable_content_type_detection=True,
                                           reply_markup=ReplyKeyboardRemove())
+
+    try:
+        count_event("download_doc", message.from_user.id)
+    except Exception as ex:
+        print(f"Error occurred while collection statistics: {ex}")
 
     # remove data from db
     previous_claim_data: Optional[dict] = repository.get_claim_data(message.from_user.id, claim_data["claim_theme"])

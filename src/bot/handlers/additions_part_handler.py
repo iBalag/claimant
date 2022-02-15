@@ -8,6 +8,7 @@ from aiogram.types import ReplyKeyboardMarkup
 from handlers.common_actions_handlers import process_option_selection, process_complete_part_editing, \
     process_manual_enter, claim_tmp_option_chosen, show_claim_tmp_example
 from keyboards import emojis, get_common_start_kb, get_next_actions_kb
+from statistics import collect_statistic
 
 CLAIM_PART: str = "additions"
 
@@ -17,7 +18,8 @@ class AdditionsPart(StatesGroup):
     waiting_for_option_chosen = State()
 
 
-async def additions_start(message: types.Message):
+@collect_statistic(event_name="additions:start")
+async def additions_start(message: types.Message, state: FSMContext):
     await AdditionsPart.waiting_for_user_action.set()
     start_kb: ReplyKeyboardMarkup = get_common_start_kb()
     await message.reply("Укажите дополнительные материалы, которые вы хотите приложить к заявлению. "
@@ -25,6 +27,7 @@ async def additions_start(message: types.Message):
                         reply_markup=start_kb)
 
 
+@collect_statistic(event_name="additions:show_example")
 async def show_example(message: types.Message, state: FSMContext):
     await show_claim_tmp_example(message, CLAIM_PART)
 

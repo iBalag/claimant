@@ -12,6 +12,7 @@ from keyboards import emojis, get_claim_parts_kb
 from repository import Repository
 
 from common import CourtInfo, resolve_court_address
+from statistics import collect_statistic, count_event
 
 
 class HeadPart(StatesGroup):
@@ -28,7 +29,8 @@ class HeadPart(StatesGroup):
     waiting_for_employer_address = State()
 
 
-async def header_start(message: types.Message):
+@collect_statistic(event_name="header:start")
+async def header_start(message: types.Message, state: FSMContext):
     await message.reply("Для заполнения шапки заявления необходимо указать:\n"
                         "- ФИО и адрес истца\n"
                         "- Наименование и адрес суда\n"
@@ -67,7 +69,7 @@ async def city_chosen(message: types.Message, state: FSMContext):
     await HeadPart.waiting_for_user_street.set()
     # TODO: return keyboard with one button 'back'
     await message.answer("Принято! А теперь укажите название улицы, на которой вы прописаны",
-                        reply_markup=ReplyKeyboardRemove())
+                         reply_markup=ReplyKeyboardRemove())
 
 
 async def street_chosen(message: types.Message, state: FSMContext):
@@ -163,6 +165,7 @@ async def option_chosen(message: types.Message, state: FSMContext):
         return
 
 
+@collect_statistic(event_name="header:enter_court_manualy")
 async def court_entered(message: types.Message, state: FSMContext):
     court_info_raw: Optional[str] = message.text
     court_info_agg: List[str] = re.split(",?\\s*\\d{6}\\s*,?", court_info_raw)
@@ -183,6 +186,12 @@ async def court_chosen(callback_query: types.CallbackQuery, state: FSMContext):
     court_info: List[CourtInfo] = user_data["court_info"]
     chosen_court: CourtInfo = court_info[chosen_option_index]
     await callback_query.answer(text=f"Суд '{chosen_court.name}' выбран.", show_alert=True)
+
+    try:
+        count_event("header:court_auto_chosen", callback_query.from_user.id)
+    except Exception as ex:
+        print(f"Error occurred while collection statistics: {ex}")
+
     await state.update_data(chosen_court=chosen_court)
     await HeadPart.waiting_for_employer_name.set()
     await callback_query.message.answer("Введите название организации и её ИНН, в которой вы работаете. "
