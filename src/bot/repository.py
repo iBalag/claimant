@@ -5,7 +5,7 @@ from bson import ObjectId
 from cryptography.fernet import Fernet
 
 from dotenv import dotenv_values
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 
 import bot_config
 
@@ -145,3 +145,8 @@ class Repository:
             if len(result) > 1:
                 # TODO: how to hande this? Take latest?
                 return result[0]
+
+    def get_statistics_slice(self, max_days: int = 30) -> List[dict]:
+        with self._get_mongo_client() as client:
+            result = list(client[self.db_name]["statistics"].find().sort("date", DESCENDING).limit(max_days))
+            return result

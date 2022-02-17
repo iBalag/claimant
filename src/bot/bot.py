@@ -5,7 +5,7 @@ from aiogram import executor, Dispatcher
 from dotenv import dotenv_values
 
 from handlers import start_menu, head_part_handler, story_part_handler, essence_part_handler, proofs_part_handler, \
-    claims_part_handler, additions_part_handler, download_doc_handler
+    claims_part_handler, additions_part_handler, download_doc_handler, admin_actions_handler
 from init_bot import init_bot
 import bot_config
 
@@ -39,4 +39,5 @@ if __name__ == "__main__":
     claims_part_handler.register_handlers(dp)
     additions_part_handler.register_handlers(dp)
     download_doc_handler.register_handlers(dp)
+    admin_actions_handler.register_handlers(dp)
     executor.start_polling(dp, skip_updates=True, on_shutdown=shutdown)
