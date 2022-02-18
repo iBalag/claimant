@@ -1,10 +1,10 @@
 version: "3.8"
 services:
-#  bot:
-#    image: "claimant-bot:dev"
-#    container_name: "claimant-bot"
-#    volumes:
-#      - ./.env-dev:/claimant/.env-dev
+  bot:
+    image: "claimant-bot:latest"
+    container_name: "claimant-bot"
+    volumes:
+      - ./.env:/claimant/.env
 
   clear-db-daemon:
     image: "clear-db-daemon:latest"
