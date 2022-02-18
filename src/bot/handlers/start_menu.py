@@ -64,25 +64,23 @@ async def choose_claim_part(message: types.Message, state: FSMContext):
     if state is not None:
         await state.finish()
 
-    # This is the first time when the user chose the claim template.
     temp_theme_raw: str = message.text
     temp_theme: str = temp_theme_raw.replace(emojis.page_facing_up, "").strip()
     repository: Repository = Repository()
     previous_claim_data: Optional[dict] = repository.get_claim_data(message.from_user.id, temp_theme)
-    if previous_claim_data is not None:
-        repository.remove_item("claim-data", previous_claim_data["_id"])
+    # This is the first time when the user chose the claim template.
+    if previous_claim_data is None:
+        new_claim_data: dict = {
+            "user_id": message.from_user.id,
+            "claim_theme": temp_theme,
+            "created": datetime.utcnow().replace(tzinfo=pytz.UTC)
+        }
+        repository.insert_item("claim-data", new_claim_data)
 
-    new_claim_data: dict = {
-        "user_id": message.from_user.id,
-        "claim_theme": temp_theme,
-        "created": datetime.utcnow().replace(tzinfo=pytz.UTC)
-    }
-    repository.insert_item("claim-data", new_claim_data)
-
-    try:
-        count_event(f"claim_template:{temp_theme}", message.from_user.id)
-    except Exception as ex:
-        print(f"Error occurred while collection statistics: {ex}")
+        try:
+            count_event(f"claim_template:{temp_theme}", message.from_user.id)
+        except Exception as ex:
+            print(f"Error occurred while collection statistics: {ex}")
 
     claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
     await message.reply("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
