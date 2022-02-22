@@ -150,3 +150,9 @@ class Repository:
         with self._get_mongo_client() as client:
             result = list(client[self.db_name]["statistics"].find().sort("date", DESCENDING).limit(max_days))
             return result
+
+    def is_collection(self, collection_name: str) -> bool:
+        with self._get_mongo_client() as client:
+            collections = list(client[self.db_name].list_collections())
+            collections_name = [c["name"] for c in collections]
+            return True if collection_name in collections_name else False

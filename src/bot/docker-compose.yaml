@@ -18,21 +18,6 @@ services:
     depends_on:
       - bot-db
 
-  #  bot-fsm-storage:
-#    image: "redis:alpine"
-#    container_name: "bot-fsm-storage"
-#    ports:
-#      - "6379:6379"
-#    healthcheck:
-#      test: [ "CMD", "redis-cli", "ping" ]
-#      interval: 5s
-#      timeout: 30s
-#      retries: 50
-#    restart: always
-#    command: redis-server --requirepass ${REDIS_PASSWORD}
-#    environment:
-#      - REDIS_REPLICATION_MODE=master
-
   bot-db:
     image: "mongo:4.2-bionic"
     container_name: "bot-db"

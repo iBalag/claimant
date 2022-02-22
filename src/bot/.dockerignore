@@ -4,3 +4,4 @@ playground
 .env-dev
 docker-compose.yaml
 init-mongo.sh
+resources/README.md
