@@ -4,8 +4,7 @@
 This bot helps people to compose the claim into the court without help from the lawyer side.
 
 [RU] Данный репозиторий содержит исходный код телеграмм бота [claimant_bot](https://t.me/claimant_bot).
-Этот бот помогает людям составлять различные исковые заявления в суд не прибегая к помощи юриста.
-
+Этот бот помогает людям составлять различные исковые заявления в суд не прибегая к помощи профессионального юриста.
 
 #### How to start bot?
 1. Firstly, you need to build claimant-bot docker image with command:
@@ -32,3 +31,15 @@ MONGO_PORT= # MongoDB port. By default - 27017
 ```
 3. When you achieve a correct .env file, you can run bot with docker-compose command from ./src/bot directory:
 `docker-compose up -d`
+
+#### About claim templates
+[EN]
+The main part of claimant-bot is a claim templates. The claim template is a decomposition of claim with a specific theme,
+which was built by profession lawyers. It contains predefined options for choosing, examples of life situations and 
+describes what action should user do for composing claim properly. You can find the claim template JSON-schema description 
+in this [readme](./src/bot/resources/README.md).
+
+[RU] Основной элемент claimant-bot это шаблоны исковых заявлений. Шаблон искового заявления - это декомпозиция
+конкретного искового заявления, которая составляется профессиональными юристами. Шаблон содержит заготовленные ответы,
+примеры ситуаций, а так же описывает какие действия должен совершить пользователь для правильного составления заявления.
+Вы можете найти описание JSON-схемы шаблонов в этой [документации](./src/bot/resources/README.md).
