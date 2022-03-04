@@ -7,6 +7,7 @@ oof_profit_calculator = imp.load_source('oof_profit_calculator', './common/oof_p
 
 @pytest.mark.parametrize("start_date, end_date, month_between", [
     (datetime(2018, 11, 28), datetime(2018, 11, 28), 0),
+    (datetime(2018, 12, 1), datetime(2018, 12, 31), 0),
     (datetime(2018, 10, 28), datetime(2018, 11, 28), 1),
     (datetime(2018, 10, 31), datetime(2018, 11, 1), 1),
     (datetime(2017, 11, 28), datetime(2018, 11, 28), 12),
