@@ -19,6 +19,11 @@ def test_calc_months_diff(start_date, end_date, month_between):
 @pytest.mark.parametrize("start_day, start_day_weekday, end_day, expected_result", [
     (1, 0, 28, 20),
     (1, 0, 31, 23),
+    (1, 0, 30, 22),
+    (1, 5, 30, 20),
+    (1, 5, 31, 21),
+    (1, 6, 31, 22),
+    (1, 6, 30, 21),
     (1, 5, 2, 0),
     (1, 5, 2, 0),
     (20, 2, 26, 5),
