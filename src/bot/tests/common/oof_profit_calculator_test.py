@@ -14,3 +14,16 @@ oof_profit_calculator = imp.load_source('oof_profit_calculator', './common/oof_p
 ])
 def test_calc_months_diff(start_date, end_date, month_between):
     assert month_between == oof_profit_calculator.calc_months_diff(start_date, end_date)
+
+# monday is 0, sunday is 6
+@pytest.mark.parametrize("start_day, start_day_weekday, end_day, expected_result", [
+    (1, 0, 28, 20),
+    (1, 0, 31, 23),
+    (1, 5, 2, 0),
+    (1, 5, 2, 0),
+    (20, 2, 26, 5),
+    (20, 2, 27, 6),
+])
+def test_calc_work_days_in_month(start_day: int, start_day_weekday: int, end_day: int, expected_result: int):
+    assert expected_result == oof_profit_calculator.calc_work_days_in_month(start_day, start_day_weekday, end_day)
+
