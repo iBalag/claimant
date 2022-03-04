@@ -129,3 +129,7 @@ dmypy.json
 .pyre/
 
 /src/bot/playground/
+
+# MacOS
+.DS_Store
+
