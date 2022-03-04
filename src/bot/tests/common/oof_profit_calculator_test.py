@@ -1,9 +1,7 @@
 from datetime import datetime
 import pytest;
-import imp;
 
-oof_profit_calculator = imp.load_source('oof_profit_calculator', './common/oof_profit_calculator.py');
-
+import common.oof_profit_calculator as oof_profit_calculator
 
 @pytest.mark.parametrize("start_date, end_date, month_between", [
     (datetime(2018, 11, 28), datetime(2018, 11, 28), 0),
