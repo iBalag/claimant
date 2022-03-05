@@ -60,14 +60,3 @@ async def resolve_court_address(city: str, court_subj: str, street: str) -> List
             body: str = await resp.text()
             result = parse_court_data(body, city)
             return result
-
-
-# test_data: dict = {
-#     "city": "Иваново",
-#     "court_subj": 37,
-#     "street": "Ленина"
-# }
-#
-#
-# loop = asyncio.get_event_loop()
-# loop.run_until_complete(resolve_court_address(**test_data))
