@@ -73,8 +73,8 @@ def test_calc_work_days_in_month(start_day: int, start_day_weekday: int, end_day
         datetime(2022, 2, 28),
         20,
         oof_profit_calculator.OOFCalculation(
-            oof_profit=64,
-            oof_days=64,
+            oof_profit=63,
+            oof_days=63,
             oof_months=1,
             first_month_days_oof=23,
             current_month_days_oof=20
@@ -85,8 +85,8 @@ def test_calc_work_days_in_month(start_day: int, start_day_weekday: int, end_day
         datetime(2022, 2, 28),
         20,
         oof_profit_calculator.OOFCalculation(
-            oof_profit=86, # actual 82
-            oof_days=86, # actual 82
+            oof_profit=82,
+            oof_days=82,  # number of days is 86, but we take the average for months in between
             oof_months=2,
             first_month_days_oof=22,
             current_month_days_oof=20
@@ -97,9 +97,9 @@ def test_calc_work_days_in_month(start_day: int, start_day_weekday: int, end_day
         datetime(2022, 2, 28),
         20,
         oof_profit_calculator.OOFCalculation(
-            oof_profit=103, # I used 82 as a starting point, 82 + 21 = 103, actual 101
-            oof_days=103, # I used 82 as a starting point, 82 + 21 = 103, actual 101
-            oof_months=2,
+            oof_profit=101, # number of days is 103, but we take the average for months in between
+            oof_days=101, # number of days is 103, but we take the average for months in between
+            oof_months=3,
             first_month_days_oof=21,
             current_month_days_oof=20
         )
