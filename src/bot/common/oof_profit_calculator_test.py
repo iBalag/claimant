@@ -32,28 +32,112 @@ def test_calc_work_days_in_month(start_day: int, start_day_weekday: int, end_day
     assert expected_result == oof_profit_calculator.calc_work_days_in_month(start_day, start_day_weekday, end_day)
 
 @pytest.mark.parametrize("start_oof_date, current_date, avr_salary, expected_profit", [
-    # (
-        # datetime(2022, 3, 4),
-        # datetime(2022, 3, 4),
-        # 20,
-        # oof_profit_calculator.OOFCalculation(
-            # oof_profit=1,
-            # oof_days=1,
-            # oof_months=0,
-            # first_month_days_oof=1,
-            # current_month_days_oof=1
-        # )
-    # ),
     (
-        datetime(2022, 2, 4),
+        datetime(2022, 3, 4),
         datetime(2022, 3, 4),
         20,
         oof_profit_calculator.OOFCalculation(
-            oof_profit=21,
-            oof_days=21,
+            oof_profit=1,
+            oof_days=1,
             oof_months=0,
-            first_month_days_oof=17,
-            current_month_days_oof=4
+            first_month_days_oof=0,
+            current_month_days_oof=1
+        )
+    ),
+    (
+        datetime(2022, 2, 1),
+        datetime(2022, 2, 28),
+        20,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=20,
+            oof_days=20,
+            oof_months=0,
+            first_month_days_oof=0,
+            current_month_days_oof=20
+        )
+    ),
+    (
+        datetime(2022, 2, 1),
+        datetime(2022, 3, 31),
+        40,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=86,
+            oof_days=43,
+            oof_months=0,
+            first_month_days_oof=20,
+            current_month_days_oof=23
+        )
+    ),
+    (
+        datetime(2021, 12, 1),
+        datetime(2022, 2, 28),
+        20,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=64,
+            oof_days=64,
+            oof_months=1,
+            first_month_days_oof=23,
+            current_month_days_oof=20
+        )
+    ),
+    (
+        datetime(2021, 11, 1),
+        datetime(2022, 2, 28),
+        20,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=86, # actual 82
+            oof_days=86, # actual 82
+            oof_months=2,
+            first_month_days_oof=22,
+            current_month_days_oof=20
+        )
+    ),
+    (
+        datetime(2021, 10, 1),
+        datetime(2022, 2, 28),
+        20,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=103, # I used 82 as a starting point, 82 + 21 = 103, actual 101
+            oof_days=103, # I used 82 as a starting point, 82 + 21 = 103, actual 101
+            oof_months=2,
+            first_month_days_oof=21,
+            current_month_days_oof=20
+        )
+    ),
+    (
+        datetime(2022, 1, 1),
+        datetime(2022, 3, 31),
+        20,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=64,
+            oof_days=64,
+            oof_months=1,
+            first_month_days_oof=21,
+            current_month_days_oof=23
+        )
+    ),
+    (
+        datetime(2021, 12, 1),
+        datetime(2022, 1, 31),
+        20,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=44,
+            oof_days=44,
+            oof_months=0,
+            first_month_days_oof=23,
+            current_month_days_oof=21
+        )
+    ),
+    (
+        datetime(2022, 1, 1),
+        datetime(2022, 2, 28),
+        20,
+        oof_profit_calculator.OOFCalculation(
+            oof_profit=41,
+            oof_days=41,
+            oof_months=0,
+            first_month_days_oof=21,
+            current_month_days_oof=20
         )
     )
 ])
