@@ -6,7 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
-python_check:
+
+jobs:
+
+  python_check:
     name: Check files
     outputs:
       run_job: ${{ steps.check_files.outputs.run_job }}
@@ -32,10 +35,9 @@ python_check:
               echo "::set-output name=run_job::true"
           fi
 
-jobs:
-  build:
-    needs: python_check
-    if: needs.python_check.outputs.run_job == 'true'
+  pytest:
+    needs: check
+    if: needs.check.outputs.run_job == 'true'
     runs-on: ubuntu-latest
 
     steps:
