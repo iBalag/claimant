@@ -28,7 +28,8 @@ jobs:
 
           echo "========== check paths of modified files =========="
           changes_in_bot=$(git diff --name-only HEAD^ HEAD | grep src/bot)
-          if [ -z $changes_in_bot ]; then
+          echo "changes: $changes_in_bot"
+          if [[ -z $changes_in_bot ]]; then
               echo "src/bot has no changes. No test run required"
               echo "::set-output name=run_job::false"
           else
