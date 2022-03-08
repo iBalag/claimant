@@ -36,8 +36,8 @@ jobs:
           fi
 
   pytest:
-    needs: check
-    if: needs.check.outputs.run_job == 'true'
+    needs: python_check
+    if: needs.python_check.outputs.run_job == 'true'
     runs-on: ubuntu-latest
 
     steps:
