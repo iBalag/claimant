@@ -19,8 +19,6 @@ jobs:
     - name: Install dependencies
       run: |
         cd src/bot
-        pwd
-        ls
         python -m pip install --upgrade pip
         pip install pytest
         pip install -r requirements.txt
