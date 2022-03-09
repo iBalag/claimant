@@ -1,5 +1,5 @@
 from datetime import datetime
-import pytest;
+import pytest
 
 import common.oof_profit_calculator as oof_profit_calculator
 
