@@ -42,17 +42,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.10
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: "3.10"
+        python-version: "3.8"
     - name: Install dependencies
       run: |
         cd src/bot
         python -m pip install --upgrade pip
-        pip install pytest
-        pip install -r requirements.txt
-        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        pip install -r requirements-dev.txt
     - name: Test with pytest
       run: |
         cd src/bot
