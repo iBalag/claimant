@@ -5,3 +5,4 @@ playground
 docker-compose.yaml
 init-mongo.sh
 resources/README.md
+tests/
