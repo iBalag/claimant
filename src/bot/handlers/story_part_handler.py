@@ -4,7 +4,8 @@ from typing import List, Optional
 from aiogram import types, Dispatcher, filters
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton, InlineKeyboardMarkup, \
+    InlineKeyboardButton
 
 from common import telegram_calendar
 from keyboards import emojis, get_claim_parts_kb
@@ -22,6 +23,7 @@ CLAIM_PART: str = "story"
 class StoryPart(StatesGroup):
     waiting_for_start_work_date = State()
     waiting_for_end_work_date = State()
+    waiting_for_payoff_date = State()
     waiting_for_user_position = State()
     waiting_for_user_salary = State()
     waiting_for_avr_salary = State()
@@ -56,6 +58,12 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
             await callback_query.message.answer(
                 "Далее укажите дату последнего отработанного дня в компании.",
                 reply_markup=calendar_kb)
+        elif "enter_payoff_date" in actions:
+            await StoryPart.waiting_for_payoff_date.set()
+            calendar_kb = telegram_calendar.create_calendar()
+            await callback_query.message.answer(
+                "Далее укажите дату, с которой перестали приходить выплаты по заработной плате.",
+                reply_markup=calendar_kb)
         else:
             await StoryPart.waiting_for_user_position.set()
             await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
@@ -63,25 +71,29 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
                                                 reply_markup=example_kb)
 
 
-async def end_work_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
-    is_date, end_work_date = await telegram_calendar.process_calendar_selection(callback_query)
+async def action_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
+    is_date, entered_date = await telegram_calendar.process_calendar_selection(callback_query)
     if is_date:
-        if end_work_date > datetime.now():
+        if entered_date > datetime.now():
             await callback_query.answer(text="Выбрана некорректная дата (больше текущей). Попробуйте еще раз.",
                                         show_alert=True)
             return
 
         user_data = await state.get_data()
         start_work_date = user_data.get("start_work_date")
-        if end_work_date <= start_work_date:
+        if entered_date <= start_work_date:
             await callback_query.answer(
-                text="Дата последнего рабочего дня должна быть больше даты первого рабочего дня."
-                     "Попробуйте еще раз.",
+                text="Выбрана некорректная дата - больше даты первого рабочего дня. Попробуйте еще раз.",
                      show_alert=True)
             return
 
-        await callback_query.answer(text=f"Выбрана дата: {end_work_date.strftime('%d.%m.%Y')}.", show_alert=True)
-        await state.update_data(end_work_date=end_work_date)
+        await callback_query.answer(text=f"Выбрана дата: {entered_date.strftime('%d.%m.%Y')}.", show_alert=True)
+        current_state = await state.get_state()
+        if StoryPart.waiting_for_payoff_date.state == current_state:
+            await state.update_data(payoff_date=entered_date)
+        elif StoryPart.waiting_for_end_work_date == current_state:
+            await state.update_data(end_work_date=entered_date)
+
         await StoryPart.waiting_for_user_position.set()
         await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
                                             "Можно посмотреть в трудовой книжке или трудовом договоре.",
@@ -190,7 +202,10 @@ def get_placeholders(story_data: dict) -> dict:
     placeholders = {}
     if "end_work_date" in story_data.keys():
         placeholders["end_work_date"] = story_data["end_work_date"].strftime("%d.%m.%Y")
+    if "payoff_date" in story_data.keys():
+        placeholders["payoff_date"] = story_data["payoff_date"].strftime("%d.%m.%Y")
 
+    placeholders["current_date"] = datetime.now().strftime("%d.%m.%Y")
     return placeholders
 
 
@@ -200,12 +215,10 @@ def register_handlers(dp: Dispatcher):
                                 filters.Regexp(f"^{emojis.red_question_mark} показать пример"),
                                 state=StoryPart.states)
     dp.register_callback_query_handler(start_work_date_entered, state=StoryPart.waiting_for_start_work_date)
-    dp.register_callback_query_handler(end_work_date_entered, state=StoryPart.waiting_for_end_work_date)
+    dp.register_callback_query_handler(action_date_entered,
+                                       state=[StoryPart.waiting_for_end_work_date, StoryPart.waiting_for_payoff_date])
     dp.register_message_handler(user_position_entered, state=StoryPart.waiting_for_user_position)
     dp.register_message_handler(user_salary_entered, state=StoryPart.waiting_for_user_salary)
     dp.register_message_handler(avr_salary_entered, state=StoryPart.waiting_for_avr_salary)
     dp.register_message_handler(story_conflict_entered, state=StoryPart.waiting_for_user_story_conflict)
     dp.register_message_handler(user_employer_discussion_entered, state=StoryPart.waiting_for_user_employer_discussion)
-
-
-
