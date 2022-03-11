@@ -62,7 +62,7 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
             await StoryPart.waiting_for_payoff_date.set()
             calendar_kb = telegram_calendar.create_calendar()
             await callback_query.message.answer(
-                "Далее укажите дату, с которой перестали приходить выплаты по заработной плате.",
+                "Далее укажите дату, когда должна была произойти оплата (но не произошла).",
                 reply_markup=calendar_kb)
         else:
             await StoryPart.waiting_for_user_position.set()

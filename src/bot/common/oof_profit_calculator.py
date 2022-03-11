@@ -2,7 +2,7 @@ from calendar import monthrange
 from collections import namedtuple
 from datetime import datetime
 
-WORK_DAYS_PER_MONTH: int = 20
+from .constants import WORK_DAYS_PER_MONTH
 
 OOFCalculation = namedtuple("OOFCalculation",
                             ["oof_profit", "oof_days", "oof_months", "first_month_days_oof", "current_month_days_oof"])
