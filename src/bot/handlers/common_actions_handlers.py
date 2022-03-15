@@ -6,8 +6,9 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, \
     InlineKeyboardMarkup
 
-from common import calc_oof_profit
+from common import calc_oof_profit, calc_payoff_profit
 from common.oof_profit_calculator import OOFCalculation
+from common.payoff_profit_calculator import PayOffCalculation
 from keyboards import get_next_actions_kb, example_btn, get_claim_parts_kb, emojis
 from repository import Repository
 
@@ -133,7 +134,7 @@ def get_placeholders(claim_data: dict) -> dict:
     }
 
     current_date: datetime = datetime.now()
-    end_work_date = claim_data["story"]["end_work_date"]
+    end_work_date = claim_data["story"].get("end_work_date")
     avr_salary = claim_data["story"].get("avr_salary")
     if end_work_date is not None and avr_salary is not None:
         placeholders["current_date"] = current_date.strftime("%d.%m.%Y")
@@ -143,5 +144,12 @@ def get_placeholders(claim_data: dict) -> dict:
         oof_profit_calc: OOFCalculation = calc_oof_profit(start_oof_date, current_date, avr_salary)
         placeholders["oof_days"] = oof_profit_calc.oof_days
         placeholders["oof_profit"] = oof_profit_calc.oof_profit
+
+    payoff_date = claim_data["story"].get("payoff_date")
+    if payoff_date is not None and avr_salary is not None:
+        payoff_profit_calc: PayOffCalculation = calc_payoff_profit(payoff_date, current_date, avr_salary)
+        placeholders["payoff_profit"] = payoff_profit_calc.payoff_profit
+        placeholders["defendant"] = claim_data["head"]["chosen_employer_name"]
+        placeholders["compensation"] = payoff_profit_calc.compensation
 
     return placeholders
