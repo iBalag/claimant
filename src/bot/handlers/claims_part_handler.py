@@ -6,9 +6,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 
-from common import calc_oof_profit
+from common import calc_oof_profit, calc_payoff_profit
 from common.data_converter import inflect
 from common.oof_profit_calculator import OOFCalculation
+from common.payoff_profit_calculator import PayOffCalculation
 from handlers.common_actions_handlers import process_complete_part_editing
 from keyboards import emojis, get_claim_parts_kb
 from repository import Repository
@@ -72,20 +73,30 @@ async def optional_claim_selected(message: types.Message, state: FSMContext):
 
 
 def get_placeholders(claim_data: dict) -> dict:
-    end_work_date: datetime = claim_data["story"]["end_work_date"]
-    start_oof_date: datetime = end_work_date + timedelta(days=1)
-    current_date: datetime = datetime.now()
     inflected_position_gent: str = inflect(claim_data["story"]["user_position"], "gent")
+    current_date: datetime = datetime.now()
     placeholders: dict = {
         "defendant": claim_data["head"]["chosen_employer_name"],
         "position": inflected_position_gent,
-        "start_oof_date": start_oof_date.strftime("%d.%m.%Y"),
         "current_date": current_date.strftime("%d.%m.%Y"),
     }
 
-    if "avr_salary" in claim_data["story"].keys():
+    if "avr_salary" in claim_data["story"].keys() and "end_work_date" in claim_data["story"].keys():
+        end_work_date: datetime = claim_data["story"]["end_work_date"]
+        start_oof_date: datetime = end_work_date + timedelta(days=1)
+        placeholders["start_oof_date"] = start_oof_date.strftime("%d.%m.%Y")
         oof_profit_calc: OOFCalculation = calc_oof_profit(start_oof_date, current_date, claim_data["story"]["avr_salary"])
         placeholders["oof_profit"] = oof_profit_calc.oof_profit
+
+    if "avr_salary" in claim_data["story"].keys() and "payoff_date" in claim_data["story"].keys():
+        payoff_date: datetime = claim_data["story"]["payoff_date"]
+        start_payoff_profit_date: datetime = payoff_date + timedelta(days=1)
+        payoff_profit_calc: PayOffCalculation = calc_payoff_profit(start_payoff_profit_date,
+                                                                   current_date,
+                                                                   claim_data["story"]["avr_salary"])
+        placeholders["payoff_profit"] = payoff_profit_calc.payoff_profit
+        placeholders["compensation"] = payoff_profit_calc.compensation
+
     return placeholders
 
 

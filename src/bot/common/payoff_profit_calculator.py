@@ -22,17 +22,19 @@ PayOffCalculation = namedtuple(
 COMPENSATION_RATIO: float = 1 / 150
 
 
-def calc_compensation(start_payoff_date: datetime, current_date: datetime, payoff_profit: float) -> Tuple[float, int]:
-    days_delta: timedelta = current_date - start_payoff_date
+def calc_compensation(start_payoff_profit_date: datetime,
+                      current_date: datetime, payoff_profit: float) -> Tuple[float, int]:
+    days_delta: timedelta = current_date - start_payoff_profit_date
     key_rate: float = get_key_rate()
     compensation: float = payoff_profit * ((key_rate / 100) * COMPENSATION_RATIO) * days_delta.days
     return round(compensation, 2), days_delta.days
 
 
-def calc_payoff_profit(start_payoff_date: datetime, current_date: datetime, avr_salary: float) -> PayOffCalculation:
+def calc_payoff_profit(start_payoff_profit_date: datetime,
+                       current_date: datetime, avr_salary: float) -> PayOffCalculation:
     # payoff profit calculation is equal to oof profit calculation
-    oof_profit_calc: OOFCalculation = calc_oof_profit(start_payoff_date, current_date, avr_salary)
-    compensation, whole_days = calc_compensation(start_payoff_date, current_date, oof_profit_calc.oof_profit)
+    oof_profit_calc: OOFCalculation = calc_oof_profit(start_payoff_profit_date, current_date, avr_salary)
+    compensation, whole_days = calc_compensation(start_payoff_profit_date, current_date, oof_profit_calc.oof_profit)
 
     return PayOffCalculation(
         payoff_profit=oof_profit_calc.oof_profit,
