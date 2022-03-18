@@ -7,7 +7,7 @@
         ],
         "actions" : [
             "enter_payoff_date",
-            "enter_avr_salary"
+            "enter_payment_info"
         ]
     },
     "essence" : {

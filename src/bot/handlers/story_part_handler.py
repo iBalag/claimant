@@ -22,13 +22,21 @@ CLAIM_PART: str = "story"
 
 class StoryPart(StatesGroup):
     waiting_for_start_work_date = State()
-    waiting_for_end_work_date = State()
-    waiting_for_payoff_date = State()
     waiting_for_user_position = State()
     waiting_for_user_salary = State()
-    waiting_for_avr_salary = State()
     waiting_for_user_story_conflict = State()
     waiting_for_user_employer_discussion = State()
+
+    # reinstatement
+    waiting_for_end_work_date = State()
+    waiting_for_avr_salary = State()
+
+    # wages recovery
+    waiting_for_payoff_date = State()
+    waiting_for_1_pay_day = State()
+    waiting_for_1_payment = State()
+    waiting_for_2_pay_day = State()
+    waiting_for_2_payment = State()
 
 
 @collect_statistic(event_name="story:start")
@@ -120,9 +128,60 @@ async def user_salary_entered(message: types.Message, state: FSMContext):
                              "с учетом всех надбавок и премий. Например: 35000",
                              reply_markup=ReplyKeyboardRemove())
         return
+    if actions is not None and "enter_payment_info" in actions:
+        await StoryPart.waiting_for_1_pay_day.set()
+        await message.answer("Пожалуйста, введите число месяца, когда вам приходит заработная плата. Например: 5",
+                             reply_markup=ReplyKeyboardRemove())
+        return
 
     await StoryPart.waiting_for_user_story_conflict.set()
     await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
+
+
+async def payday_entered(message: types.Message, state: FSMContext):
+    payday_raw: Optional[str] = message.text
+    if payday_raw is None or payday_raw.isdigit() is False:
+        await message.reply("Число месяца указано неверно. Попробуйте еще раз. Например: 5")
+        return
+
+    payday = int(payday_raw)
+    if payday <= 0 or payday > 28:
+        await message.reply("Число месяца указано вне диапазона 1-28. Попробуйте еще раз. Например: 5")
+        return
+
+    example_payment: int = 0
+    current_state = await state.get_state()
+    if current_state == StoryPart.waiting_for_1_pay_day.state:
+        await state.update_data(pay_day_1=payday)
+        await StoryPart.waiting_for_1_payment.set()
+        example_payment = 20000
+    if current_state == StoryPart.waiting_for_2_pay_day.state:
+        await state.update_data(pay_day_2=payday)
+        await StoryPart.waiting_for_2_payment.set()
+        example_payment = 15000
+
+    await message.answer(f"Введите сумму, которую вы получаете {payday}-го числа. Например: {example_payment}",
+                         reply_markup=ReplyKeyboardRemove())
+
+
+async def payment_entered(message: types.Message, state: FSMContext):
+    payment_raw: Optional[str] = message.text
+    if payment_raw is None or payment_raw.isdigit() is False:
+        await message.reply("Сумма указано неверно. Попробуйте еще раз. Например: 20000")
+        return
+
+    payment = float(payment_raw)
+    current_state = await state.get_state()
+    if current_state == StoryPart.waiting_for_1_payment.state:
+        await state.update_data(payment_1=payment)
+        await StoryPart.waiting_for_2_pay_day.set()
+        await message.answer("Пожалуйста, введите число месяца, когда вам приходит аванс. Например: 5",
+                             reply_markup=ReplyKeyboardRemove())
+        return
+    if current_state == StoryPart.waiting_for_2_payment.state:
+        await state.update_data(payment_2=payment)
+        await StoryPart.waiting_for_user_story_conflict.set()
+        await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
 
 
 async def avr_salary_entered(message: types.Message, state: FSMContext):
@@ -217,6 +276,10 @@ def register_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(start_work_date_entered, state=StoryPart.waiting_for_start_work_date)
     dp.register_callback_query_handler(action_date_entered,
                                        state=[StoryPart.waiting_for_end_work_date, StoryPart.waiting_for_payoff_date])
+    dp.register_message_handler(payday_entered,
+                                state=[StoryPart.waiting_for_1_pay_day, StoryPart.waiting_for_2_pay_day])
+    dp.register_message_handler(payment_entered,
+                                state=[StoryPart.waiting_for_1_payment, StoryPart.waiting_for_2_payment])
     dp.register_message_handler(user_position_entered, state=StoryPart.waiting_for_user_position)
     dp.register_message_handler(user_salary_entered, state=StoryPart.waiting_for_user_salary)
     dp.register_message_handler(avr_salary_entered, state=StoryPart.waiting_for_avr_salary)
