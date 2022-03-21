@@ -2,7 +2,7 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from typing import Tuple
 
-from .oof_profit_calculator import OOFCalculation, calc_oof_profit
+from .oof_profit_calculator import OOFCalculation, calc_months_diff
 from .crb_client import get_key_rate
 
 PayOffCalculation = namedtuple(
@@ -10,10 +10,8 @@ PayOffCalculation = namedtuple(
     [
         "payoff_profit",
         "compensation",
-        "payoff_days",
-        "payoff_months",
-        "first_month_payoff_days",
-        "current_month_payoff_days",
+        "paydays_1_count",
+        "paydays_2_count",
         "whole_days"
     ]
 )
@@ -30,19 +28,32 @@ def calc_compensation(start_payoff_profit_date: datetime,
     return round(compensation, 2), days_delta.days
 
 
-def calc_payoff_profit(start_payoff_profit_date: datetime,
-                       current_date: datetime, avr_salary: float) -> PayOffCalculation:
-    # payoff profit calculation is equal to oof profit calculation
-    oof_profit_calc: OOFCalculation = calc_oof_profit(start_payoff_profit_date, current_date, avr_salary)
-    compensation, whole_days = calc_compensation(start_payoff_profit_date, current_date, oof_profit_calc.oof_profit)
+def calc_paydays_count(payoff_date: datetime, payday: int, current_date: datetime) -> int:
+    months_diff: int = calc_months_diff(payoff_date, current_date)
+    first_month_payday: int = 1 if payoff_date.day <= payday else 0
+    if months_diff == 0:
+        return first_month_payday
+
+    last_month_payday: int = 1 if current_date.day >= payday else 0
+    if months_diff == 1:
+        return first_month_payday + last_month_payday
+    else:
+        return first_month_payday + (months_diff - 1) + last_month_payday
+
+
+def calc_payoff_profit(payoff_date: datetime, payday_1: int, payment_1: float, payday_2: int, payment_2: float,
+                       current_date: datetime) -> PayOffCalculation:
+    paydays_1_count: int = calc_paydays_count(payoff_date, payday_1, current_date)
+    paydays_2_count: int = calc_paydays_count(payoff_date, payday_2, current_date)
+    payoff_profit: float = paydays_1_count * payment_1 + paydays_2_count * payment_2
+
+    compensation, whole_days = calc_compensation(payoff_date, current_date, payoff_profit)
 
     return PayOffCalculation(
-        payoff_profit=oof_profit_calc.oof_profit,
+        payoff_profit=payoff_profit,
         compensation=compensation,
-        payoff_days=oof_profit_calc.oof_days,
-        payoff_months=oof_profit_calc.oof_months,
-        first_month_payoff_days=oof_profit_calc.first_month_days_oof,
-        current_month_payoff_days=oof_profit_calc.current_month_days_oof,
+        paydays_1_count=paydays_1_count,
+        paydays_2_count=paydays_2_count,
         whole_days=whole_days
     )
 

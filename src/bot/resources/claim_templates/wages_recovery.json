@@ -3,7 +3,7 @@
     "story" : {
         "examples" : [
             "инженер",
-            "С {payoff_date} по {current_date} мне не выплачивалась заработная плата."
+            "С {payoff_date} по настоящее время мне не выплачивалась заработная плата."
         ],
         "actions" : [
             "enter_payoff_date",

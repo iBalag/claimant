@@ -146,9 +146,14 @@ def get_placeholders(claim_data: dict) -> dict:
         placeholders["oof_profit"] = oof_profit_calc.oof_profit
 
     payoff_date = claim_data["story"].get("payoff_date")
-    if payoff_date is not None and avr_salary is not None:
+    if payoff_date is not None:
         start_payoff_profit_date: datetime = payoff_date + timedelta(days=1)
-        payoff_profit_calc: PayOffCalculation = calc_payoff_profit(start_payoff_profit_date, current_date, avr_salary)
+        payoff_profit_calc: PayOffCalculation = calc_payoff_profit(start_payoff_profit_date,
+                                                                   claim_data["story"]["pay_day_1"],
+                                                                   claim_data["story"]["payment_1"],
+                                                                   claim_data["story"]["pay_day_2"],
+                                                                   claim_data["story"]["payment_2"],
+                                                                   current_date)
         placeholders["payoff_profit"] = payoff_profit_calc.payoff_profit
         placeholders["defendant"] = claim_data["head"]["chosen_employer_name"]
         placeholders["compensation"] = payoff_profit_calc.compensation

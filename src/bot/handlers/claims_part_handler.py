@@ -92,8 +92,11 @@ def get_placeholders(claim_data: dict) -> dict:
         payoff_date: datetime = claim_data["story"]["payoff_date"]
         start_payoff_profit_date: datetime = payoff_date + timedelta(days=1)
         payoff_profit_calc: PayOffCalculation = calc_payoff_profit(start_payoff_profit_date,
-                                                                   current_date,
-                                                                   claim_data["story"]["avr_salary"])
+                                                                   claim_data["story"]["pay_day_1"],
+                                                                   claim_data["story"]["payment_1"],
+                                                                   claim_data["story"]["pay_day_2"],
+                                                                   claim_data["story"]["payment_2"],
+                                                                   current_date)
         placeholders["payoff_profit"] = payoff_profit_calc.payoff_profit
         placeholders["compensation"] = payoff_profit_calc.compensation
 
