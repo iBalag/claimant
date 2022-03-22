@@ -12,6 +12,7 @@ PayOffCalculation = namedtuple(
         "compensation",
         "paydays_1_count",
         "paydays_2_count",
+        "key_rate",
         "whole_days"
     ]
 )
@@ -21,9 +22,8 @@ COMPENSATION_RATIO: float = 1 / 150
 
 
 def calc_compensation(start_payoff_profit_date: datetime,
-                      current_date: datetime, payoff_profit: float) -> Tuple[float, int]:
+                      current_date: datetime, payoff_profit: float, key_rate) -> Tuple[float, int]:
     days_delta: timedelta = current_date - start_payoff_profit_date
-    key_rate: float = get_key_rate()
     compensation: float = payoff_profit * ((key_rate / 100) * COMPENSATION_RATIO) * days_delta.days
     return round(compensation, 2), days_delta.days
 
@@ -47,13 +47,15 @@ def calc_payoff_profit(payoff_date: datetime, payday_1: int, payment_1: float, p
     paydays_2_count: int = calc_paydays_count(payoff_date, payday_2, current_date)
     payoff_profit: float = paydays_1_count * payment_1 + paydays_2_count * payment_2
 
-    compensation, whole_days = calc_compensation(payoff_date, current_date, payoff_profit)
+    key_rate: float = get_key_rate()
+    compensation, whole_days = calc_compensation(payoff_date, current_date, payoff_profit, key_rate)
 
     return PayOffCalculation(
         payoff_profit=payoff_profit,
         compensation=compensation,
         paydays_1_count=paydays_1_count,
         paydays_2_count=paydays_2_count,
+        key_rate=key_rate,
         whole_days=whole_days
     )
 

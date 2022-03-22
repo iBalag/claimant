@@ -11,6 +11,7 @@ import common.payoff_profit_calculator as payoff_profit_calculator
     (datetime(2018, 11, 4), 5, datetime(2018, 12, 4), 1),
     (datetime(2018, 10, 4), 5, datetime(2019, 2, 1), 4),
     (datetime(2018, 10, 6), 5, datetime(2018, 11, 6), 1),
+    (datetime(2021, 12, 10), 10, datetime(2022, 3, 22), 4),
 ])
 def test_get_paydays_count(payoff_date: datetime, payday: int, current_date: datetime, paydays_count: int):
     assert paydays_count == payoff_profit_calculator.calc_paydays_count(payoff_date, payday, current_date)

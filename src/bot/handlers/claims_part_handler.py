@@ -90,8 +90,7 @@ def get_placeholders(claim_data: dict) -> dict:
 
     if "avr_salary" in claim_data["story"].keys() and "payoff_date" in claim_data["story"].keys():
         payoff_date: datetime = claim_data["story"]["payoff_date"]
-        start_payoff_profit_date: datetime = payoff_date + timedelta(days=1)
-        payoff_profit_calc: PayOffCalculation = calc_payoff_profit(start_payoff_profit_date,
+        payoff_profit_calc: PayOffCalculation = calc_payoff_profit(payoff_date,
                                                                    claim_data["story"]["pay_day_1"],
                                                                    claim_data["story"]["payment_1"],
                                                                    claim_data["story"]["pay_day_2"],
