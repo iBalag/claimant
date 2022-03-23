@@ -151,7 +151,7 @@ def get_placeholders(claim_data: dict) -> dict:
                                                                    claim_data["story"]["pay_day_1"],
                                                                    claim_data["story"]["payment_1"],
                                                                    claim_data["story"]["pay_day_2"],
-                                                                   claim_data["story"]["payment_2"],
+                                                                   claim_data["story"].get("payment_2"),
                                                                    current_date)
         placeholders["payoff_profit"] = payoff_profit_calc.payoff_profit
         placeholders["defendant"] = claim_data["head"]["chosen_employer_name"]

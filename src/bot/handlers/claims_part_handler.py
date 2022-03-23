@@ -88,13 +88,13 @@ def get_placeholders(claim_data: dict) -> dict:
         oof_profit_calc: OOFCalculation = calc_oof_profit(start_oof_date, current_date, claim_data["story"]["avr_salary"])
         placeholders["oof_profit"] = oof_profit_calc.oof_profit
 
-    if "avr_salary" in claim_data["story"].keys() and "payoff_date" in claim_data["story"].keys():
+    if "payoff_date" in claim_data["story"].keys():
         payoff_date: datetime = claim_data["story"]["payoff_date"]
         payoff_profit_calc: PayOffCalculation = calc_payoff_profit(payoff_date,
                                                                    claim_data["story"]["pay_day_1"],
                                                                    claim_data["story"]["payment_1"],
                                                                    claim_data["story"]["pay_day_2"],
-                                                                   claim_data["story"]["payment_2"],
+                                                                   claim_data["story"].get("payment_2"),
                                                                    current_date)
         placeholders["payoff_profit"] = payoff_profit_calc.payoff_profit
         placeholders["compensation"] = payoff_profit_calc.compensation

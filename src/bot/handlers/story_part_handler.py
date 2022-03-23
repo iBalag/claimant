@@ -140,14 +140,17 @@ async def user_salary_entered(message: types.Message, state: FSMContext):
 
 async def payday_entered(message: types.Message, state: FSMContext):
     payday_raw: Optional[str] = message.text
-    if payday_raw is None or payday_raw.isdigit() is False:
+    payday: int
+    if payday_raw.lower() == "нет":
+        payday = 0
+    elif payday_raw is None or payday_raw.isdigit() is False:
         await message.reply("Число месяца указано неверно. Попробуйте еще раз. Например: 5")
         return
-
-    payday = int(payday_raw)
-    if payday <= 0 or payday > 28:
-        await message.reply("Число месяца указано вне диапазона 1-28. Попробуйте еще раз. Например: 5")
-        return
+    else:
+        payday = int(payday_raw)
+        if payday <= 0 or payday > 28:
+            await message.reply("Число месяца указано вне диапазона 1-28. Попробуйте еще раз. Например: 5")
+            return
 
     example_payment: int = 0
     current_state = await state.get_state()
@@ -157,8 +160,13 @@ async def payday_entered(message: types.Message, state: FSMContext):
         example_payment = 20000
     if current_state == StoryPart.waiting_for_2_pay_day.state:
         await state.update_data(pay_day_2=payday)
-        await StoryPart.waiting_for_2_payment.set()
-        example_payment = 15000
+        if payday != 0:
+            await StoryPart.waiting_for_2_payment.set()
+            example_payment = 15000
+        else:
+            await StoryPart.waiting_for_user_story_conflict.set()
+            await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
+            return
 
     await message.answer(f"Введите сумму, которую вы получаете {payday}-го числа. Например: {example_payment}",
                          reply_markup=ReplyKeyboardRemove())
@@ -175,7 +183,8 @@ async def payment_entered(message: types.Message, state: FSMContext):
     if current_state == StoryPart.waiting_for_1_payment.state:
         await state.update_data(payment_1=payment)
         await StoryPart.waiting_for_2_pay_day.set()
-        await message.answer("Пожалуйста, введите число месяца, когда вам приходит аванс. Например: 5",
+        await message.answer("Пожалуйста, введите число месяца, когда вам приходит аванс. Например: 5. Если у вас "
+                             "заработная плата приходит один раз в месяц (без аванса) - просто введите 'нет'.",
                              reply_markup=ReplyKeyboardRemove())
         return
     if current_state == StoryPart.waiting_for_2_payment.state:

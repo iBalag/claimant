@@ -231,7 +231,7 @@ def get_payoff_profit_calculation(claim_data: dict) -> Document:
                                                                claim_data["story"]["pay_day_1"],
                                                                claim_data["story"]["payment_1"],
                                                                claim_data["story"]["pay_day_2"],
-                                                               claim_data["story"]["payment_2"],
+                                                               claim_data["story"].get("payment_2"),
                                                                current_date)
 
     calc_doc: Document = Document()
@@ -253,17 +253,27 @@ def get_payoff_profit_calculation(claim_data: dict) -> Document:
     calc: Paragraph = calc_doc.add_paragraph()
     payoff_calc_title_font = calc.add_run("Заработная плата за предыдущий период\n").font
     payoff_calc_title_font.bold = True
-    calc.add_run(
-        f"Дата, когда перестала поступать заработная плата: {payoff_date.strftime('%d.%m.%Y')}\n"
-        f"Число месяца, когда приходит заработная плата: {claim_data['story']['pay_day_1']}\n"
-        f"Величина заработной платы, которая приходит {claim_data['story']['pay_day_1']}-го числа: {claim_data['story']['payment_1']}\n"
-        f"Число просроченных платежей по заработной плате на текущую дату: {payoff_profit_calc.paydays_1_count}\n"
-        f"Число месяца, когда приходит аванс: {claim_data['story']['pay_day_2']}\n"
-        f"Величина аванса, которая приходит {claim_data['story']['pay_day_2']}-го числа: {claim_data['story']['payment_2']}\n"
-        f"Число просроченных платежей по авансу на текущую дату: {payoff_profit_calc.paydays_2_count}\n"
-        f"Общая сумма задолженности по заработной плате: {payoff_profit_calc.paydays_1_count} * {claim_data['story']['payment_1']} + "
-        f"{payoff_profit_calc.paydays_2_count} * {claim_data['story']['payment_2']} = {payoff_profit_calc.payoff_profit}\n\n"
-    )
+    if claim_data["story"]["pay_day_2"] != 0:
+        calc.add_run(
+            f"Дата, когда перестала поступать заработная плата: {payoff_date.strftime('%d.%m.%Y')}\n"
+            f"Число месяца, когда приходит заработная плата: {claim_data['story']['pay_day_1']}\n"
+            f"Величина заработной платы, которая приходит {claim_data['story']['pay_day_1']}-го числа: {claim_data['story']['payment_1']}\n"
+            f"Число просроченных платежей по заработной плате на текущую дату: {payoff_profit_calc.paydays_1_count}\n"
+            f"Число месяца, когда приходит аванс: {claim_data['story']['pay_day_2']}\n"
+            f"Величина аванса, которая приходит {claim_data['story']['pay_day_2']}-го числа: {claim_data['story']['payment_2']}\n"
+            f"Число просроченных платежей по авансу на текущую дату: {payoff_profit_calc.paydays_2_count}\n"
+            f"Общая сумма задолженности по заработной плате: {payoff_profit_calc.paydays_1_count} * {claim_data['story']['payment_1']} + "
+            f"{payoff_profit_calc.paydays_2_count} * {claim_data['story']['payment_2']} = {payoff_profit_calc.payoff_profit}\n\n"
+        )
+    else:
+        calc.add_run(
+            f"Дата, когда перестала поступать заработная плата: {payoff_date.strftime('%d.%m.%Y')}\n"
+            f"Число месяца, когда приходит заработная плата: {claim_data['story']['pay_day_1']}\n"
+            f"Величина заработной платы, которая приходит {claim_data['story']['pay_day_1']}-го числа: {claim_data['story']['payment_1']}\n"
+            f"Число просроченных платежей по заработной плате на текущую дату: {payoff_profit_calc.paydays_1_count}\n"
+            f"Общая сумма задолженности по заработной плате: {payoff_profit_calc.paydays_1_count} * {claim_data['story']['payment_1']} "
+            f" = {payoff_profit_calc.payoff_profit}\n\n"
+        )
 
     compensation_title_font = calc.add_run("Компенсация за предыдущий период\n").font
     compensation_title_font.bold = True
