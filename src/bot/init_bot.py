@@ -30,3 +30,7 @@ def init_db():
         with open("resources/claim_templates/reinstatement.json") as claim_tmp_file:
             claim_tmp_info: dict = json.load(claim_tmp_file)
             repository.insert_item("claim-tmps", claim_tmp_info)
+
+        with open("resources/claim_templates/wages_recovery.json") as claim_tmp_file:
+            claim_tmp_info: dict = json.load(claim_tmp_file)
+            repository.insert_item("claim-tmps", claim_tmp_info)
