@@ -3,9 +3,10 @@ uvloop
 ujson
 aiogram
 python-dotenv
-pymongo
+pymongo==4.0.1
 pytz
 aioredis
 python-docx
 cryptography==3.4.8
 pymorphy2
+requests
