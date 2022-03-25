@@ -3,7 +3,7 @@ from io import StringIO
 from typing import List
 from urllib.parse import quote_plus
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from lxml import etree
 from lxml.html import HtmlElement
 
@@ -55,8 +55,13 @@ async def resolve_court_address(city: str, court_subj: str, street: str) -> List
                       "Chrome/94.0.4606.81 Safari/537.36"
     }
 
-    async with ClientSession() as session:
-        async with session.get(url, headers=headers, ssl=False,) as resp:
-            body: str = await resp.text()
-            result = parse_court_data(body, city)
-            return result
+    try:
+        async with ClientSession() as session:
+            timeout = ClientTimeout(total=30)
+            async with session.get(url, headers=headers, ssl=False, timeout=timeout) as resp:
+                body: str = await resp.text()
+                result = parse_court_data(body, city)
+                return result
+    except Exception as ex:
+        print(f"Error occurred during court address resolving: {ex}")
+        return []
