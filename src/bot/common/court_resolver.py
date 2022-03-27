@@ -1,3 +1,4 @@
+import logging
 from collections import namedtuple
 from io import StringIO
 from typing import List
@@ -57,11 +58,13 @@ async def resolve_court_address(city: str, court_subj: str, street: str) -> List
 
     try:
         async with ClientSession() as session:
-            timeout = ClientTimeout(total=30)
+            # For better user experience setup request timeout to 15 seconds
+            timeout = ClientTimeout(total=15)
             async with session.get(url, headers=headers, ssl=False, timeout=timeout) as resp:
                 body: str = await resp.text()
                 result = parse_court_data(body, city)
                 return result
-    except Exception as ex:
-        print(f"Error occurred during court address resolving: {ex}")
+    except Exception:
+        logger = logging.getLogger()
+        logger.error("Error occurred during court address resolving")
         return []
