@@ -235,7 +235,7 @@ async def employer_address_chosen(message: types.Message, state: FSMContext):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(header_start, filters.Regexp(f"^{emojis.top_hat} шапка$"))
+    dp.register_message_handler(header_start, filters.Regexp(f"^{emojis.top_hat} шапка"))
     dp.register_message_handler(user_name_chosen, state=HeadPart.waiting_for_user_name)
     dp.register_message_handler(post_code_chosen, state=HeadPart.waiting_for_user_post_code)
     dp.register_message_handler(city_chosen, state=HeadPart.waiting_for_user_city)
