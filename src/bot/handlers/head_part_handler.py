@@ -103,6 +103,8 @@ async def apartment_chosen(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     repository: Repository = Repository()
     region_code: str = repository.get_region_code(user_data["user_post_code"])
+
+    await message.answer(f"{emojis.magnifying_glass_tilted_left} Поиск подходящего суда...")
     court_info: List[CourtInfo] = await resolve_court_address(city=user_data["chosen_city"],
                                                               court_subj=region_code, street=user_data["chosen_street"])
     if len(court_info) == 0:
