@@ -66,5 +66,5 @@ async def resolve_court_address(city: str, court_subj: str, street: str) -> List
                 return result
     except Exception:
         logger = logging.getLogger()
-        logger.error("Error occurred during court address resolving")
+        logger.exception("Error occurred during court address resolving")
         return []
