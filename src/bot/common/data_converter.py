@@ -7,7 +7,7 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import Inches, Pt
 from docx.text.paragraph import Paragraph
 
-from common import calc_oof_profit
+from common import calc_oof_profit, PayOffCalculation, calc_payoff_profit
 from common.oof_profit_calculator import OOFCalculation
 from repository import Repository
 
@@ -216,6 +216,74 @@ def get_oof_profit_calculation(claim_data: dict) -> Document:
     oof_profit_title_font.bold = True
     calc.add_run("{средний заработок за день} * {Число рабочих дней за время вынужденного прогула} = "
                  f"{oof_profit_calc.oof_days} * {avr_salary/20} = {oof_profit_calc.oof_profit}\n")
+
+    footer: Paragraph = calc_doc.add_paragraph()
+    footer.text = get_footer_text(claim_data["head"])
+    footer.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+
+    return calc_doc
+
+
+def get_payoff_profit_calculation(claim_data: dict) -> Document:
+    payoff_date: datetime = claim_data["story"]["payoff_date"]
+    current_date: datetime = datetime.now()
+    payoff_profit_calc: PayOffCalculation = calc_payoff_profit(payoff_date,
+                                                               claim_data["story"]["pay_day_1"],
+                                                               claim_data["story"]["payment_1"],
+                                                               claim_data["story"]["pay_day_2"],
+                                                               claim_data["story"].get("payment_2"),
+                                                               current_date)
+
+    calc_doc: Document = Document()
+
+    # common doc settings
+    section = calc_doc.sections[-1]
+    section.top_margin = Inches(0.6)
+    section.bottom_margin = Inches(0.6)
+    section.left_margin = Inches(1)
+    section.right_margin = Inches(0.6)
+
+    theme: Paragraph = calc_doc.add_paragraph()
+    theme_font = theme.add_run("Расчет задолженности по заработной плате").font
+
+    theme.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    theme_font.size = Pt(14)
+    theme_font.bold = True
+
+    calc: Paragraph = calc_doc.add_paragraph()
+    payoff_calc_title_font = calc.add_run("Заработная плата за предыдущий период\n").font
+    payoff_calc_title_font.bold = True
+    if claim_data["story"]["pay_day_2"] != 0:
+        calc.add_run(
+            f"Дата, когда перестала поступать заработная плата: {payoff_date.strftime('%d.%m.%Y')}\n"
+            f"Число месяца, когда приходит заработная плата: {claim_data['story']['pay_day_1']}\n"
+            f"Величина заработной платы, которая приходит {claim_data['story']['pay_day_1']}-го числа: {claim_data['story']['payment_1']}\n"
+            f"Число просроченных платежей по заработной плате на текущую дату: {payoff_profit_calc.paydays_1_count}\n"
+            f"Число месяца, когда приходит аванс: {claim_data['story']['pay_day_2']}\n"
+            f"Величина аванса, которая приходит {claim_data['story']['pay_day_2']}-го числа: {claim_data['story']['payment_2']}\n"
+            f"Число просроченных платежей по авансу на текущую дату: {payoff_profit_calc.paydays_2_count}\n"
+            f"Общая сумма задолженности по заработной плате: {payoff_profit_calc.paydays_1_count} * {claim_data['story']['payment_1']} + "
+            f"{payoff_profit_calc.paydays_2_count} * {claim_data['story']['payment_2']} = {payoff_profit_calc.payoff_profit}\n\n"
+        )
+    else:
+        calc.add_run(
+            f"Дата, когда перестала поступать заработная плата: {payoff_date.strftime('%d.%m.%Y')}\n"
+            f"Число месяца, когда приходит заработная плата: {claim_data['story']['pay_day_1']}\n"
+            f"Величина заработной платы, которая приходит {claim_data['story']['pay_day_1']}-го числа: {claim_data['story']['payment_1']}\n"
+            f"Число просроченных платежей по заработной плате на текущую дату: {payoff_profit_calc.paydays_1_count}\n"
+            f"Общая сумма задолженности по заработной плате: {payoff_profit_calc.paydays_1_count} * {claim_data['story']['payment_1']} "
+            f" = {payoff_profit_calc.payoff_profit}\n\n"
+        )
+
+    compensation_title_font = calc.add_run("Компенсация за предыдущий период\n").font
+    compensation_title_font.bold = True
+
+    calc.add_run(
+        f"Число дней, прошедших с момента окончания выплат: {payoff_profit_calc.whole_days}\n"
+        f"Ставка рефинансирования: {payoff_profit_calc.key_rate}%\n"
+        f"Сумма компенсации: {payoff_profit_calc.payoff_profit} * (({payoff_profit_calc.key_rate} / 100) * 1/150) * "
+        f"{payoff_profit_calc.whole_days} = {payoff_profit_calc.compensation}\n"
+    )
 
     footer: Paragraph = calc_doc.add_paragraph()
     footer.text = get_footer_text(claim_data["head"])

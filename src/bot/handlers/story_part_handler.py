@@ -4,7 +4,8 @@ from typing import List, Optional
 from aiogram import types, Dispatcher, filters
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton, InlineKeyboardMarkup, \
+    InlineKeyboardButton
 
 from common import telegram_calendar
 from keyboards import emojis, get_claim_parts_kb
@@ -21,12 +22,21 @@ CLAIM_PART: str = "story"
 
 class StoryPart(StatesGroup):
     waiting_for_start_work_date = State()
-    waiting_for_end_work_date = State()
     waiting_for_user_position = State()
     waiting_for_user_salary = State()
-    waiting_for_avr_salary = State()
     waiting_for_user_story_conflict = State()
     waiting_for_user_employer_discussion = State()
+
+    # reinstatement
+    waiting_for_end_work_date = State()
+    waiting_for_avr_salary = State()
+
+    # wages recovery
+    waiting_for_payoff_date = State()
+    waiting_for_1_pay_day = State()
+    waiting_for_1_payment = State()
+    waiting_for_2_pay_day = State()
+    waiting_for_2_payment = State()
 
 
 @collect_statistic(event_name="story:start")
@@ -56,6 +66,12 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
             await callback_query.message.answer(
                 "Далее укажите дату последнего отработанного дня в компании.",
                 reply_markup=calendar_kb)
+        elif "enter_payoff_date" in actions:
+            await StoryPart.waiting_for_payoff_date.set()
+            calendar_kb = telegram_calendar.create_calendar()
+            await callback_query.message.answer(
+                "Далее укажите дату, когда должна была произойти оплата (но не произошла).",
+                reply_markup=calendar_kb)
         else:
             await StoryPart.waiting_for_user_position.set()
             await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
@@ -63,25 +79,29 @@ async def start_work_date_entered(callback_query: types.CallbackQuery, state: FS
                                                 reply_markup=example_kb)
 
 
-async def end_work_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
-    is_date, end_work_date = await telegram_calendar.process_calendar_selection(callback_query)
+async def action_date_entered(callback_query: types.CallbackQuery, state: FSMContext):
+    is_date, entered_date = await telegram_calendar.process_calendar_selection(callback_query)
     if is_date:
-        if end_work_date > datetime.now():
+        if entered_date > datetime.now():
             await callback_query.answer(text="Выбрана некорректная дата (больше текущей). Попробуйте еще раз.",
                                         show_alert=True)
             return
 
         user_data = await state.get_data()
         start_work_date = user_data.get("start_work_date")
-        if end_work_date <= start_work_date:
+        if entered_date <= start_work_date:
             await callback_query.answer(
-                text="Дата последнего рабочего дня должна быть больше даты первого рабочего дня."
-                     "Попробуйте еще раз.",
+                text="Выбрана некорректная дата - больше даты первого рабочего дня. Попробуйте еще раз.",
                      show_alert=True)
             return
 
-        await callback_query.answer(text=f"Выбрана дата: {end_work_date.strftime('%d.%m.%Y')}.", show_alert=True)
-        await state.update_data(end_work_date=end_work_date)
+        await callback_query.answer(text=f"Выбрана дата: {entered_date.strftime('%d.%m.%Y')}.", show_alert=True)
+        current_state = await state.get_state()
+        if StoryPart.waiting_for_payoff_date.state == current_state:
+            await state.update_data(payoff_date=entered_date)
+        elif StoryPart.waiting_for_end_work_date == current_state:
+            await state.update_data(end_work_date=entered_date)
+
         await StoryPart.waiting_for_user_position.set()
         await callback_query.message.answer("Напишите, в какой точно должности вы работали. "
                                             "Можно посмотреть в трудовой книжке или трудовом договоре.",
@@ -108,9 +128,69 @@ async def user_salary_entered(message: types.Message, state: FSMContext):
                              "с учетом всех надбавок и премий. Например: 35000",
                              reply_markup=ReplyKeyboardRemove())
         return
+    if actions is not None and "enter_payment_info" in actions:
+        await StoryPart.waiting_for_1_pay_day.set()
+        await message.answer("Пожалуйста, введите число месяца, когда вам приходит заработная плата. Например: 5",
+                             reply_markup=ReplyKeyboardRemove())
+        return
 
     await StoryPart.waiting_for_user_story_conflict.set()
     await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
+
+
+async def payday_entered(message: types.Message, state: FSMContext):
+    payday_raw: Optional[str] = message.text
+    payday: int
+    if payday_raw.lower() == "нет":
+        payday = 0
+    elif payday_raw is None or payday_raw.isdigit() is False:
+        await message.reply("Число месяца указано неверно. Попробуйте еще раз. Например: 5")
+        return
+    else:
+        payday = int(payday_raw)
+        if payday <= 0 or payday > 28:
+            await message.reply("Число месяца указано вне диапазона 1-28. Попробуйте еще раз. Например: 5")
+            return
+
+    example_payment: int = 0
+    current_state = await state.get_state()
+    if current_state == StoryPart.waiting_for_1_pay_day.state:
+        await state.update_data(pay_day_1=payday)
+        await StoryPart.waiting_for_1_payment.set()
+        example_payment = 20000
+    if current_state == StoryPart.waiting_for_2_pay_day.state:
+        await state.update_data(pay_day_2=payday)
+        if payday != 0:
+            await StoryPart.waiting_for_2_payment.set()
+            example_payment = 15000
+        else:
+            await StoryPart.waiting_for_user_story_conflict.set()
+            await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
+            return
+
+    await message.answer(f"Введите сумму, которую вы получаете {payday}-го числа. Например: {example_payment}",
+                         reply_markup=ReplyKeyboardRemove())
+
+
+async def payment_entered(message: types.Message, state: FSMContext):
+    payment_raw: Optional[str] = message.text
+    if payment_raw is None or payment_raw.isdigit() is False:
+        await message.reply("Сумма указано неверно. Попробуйте еще раз. Например: 20000")
+        return
+
+    payment = float(payment_raw)
+    current_state = await state.get_state()
+    if current_state == StoryPart.waiting_for_1_payment.state:
+        await state.update_data(payment_1=payment)
+        await StoryPart.waiting_for_2_pay_day.set()
+        await message.answer("Пожалуйста, введите число месяца, когда вам приходит аванс. Например: 5. Если у вас "
+                             "заработная плата приходит один раз в месяц (без аванса) - просто введите 'нет'.",
+                             reply_markup=ReplyKeyboardRemove())
+        return
+    if current_state == StoryPart.waiting_for_2_payment.state:
+        await state.update_data(payment_2=payment)
+        await StoryPart.waiting_for_user_story_conflict.set()
+        await message.answer("Напишите, когда и почему у вас начался трудовой конфликт.", reply_markup=example_kb)
 
 
 async def avr_salary_entered(message: types.Message, state: FSMContext):
@@ -190,7 +270,10 @@ def get_placeholders(story_data: dict) -> dict:
     placeholders = {}
     if "end_work_date" in story_data.keys():
         placeholders["end_work_date"] = story_data["end_work_date"].strftime("%d.%m.%Y")
+    if "payoff_date" in story_data.keys():
+        placeholders["payoff_date"] = story_data["payoff_date"].strftime("%d.%m.%Y")
 
+    placeholders["current_date"] = datetime.now().strftime("%d.%m.%Y")
     return placeholders
 
 
@@ -200,12 +283,14 @@ def register_handlers(dp: Dispatcher):
                                 filters.Regexp(f"^{emojis.red_question_mark} показать пример"),
                                 state=StoryPart.states)
     dp.register_callback_query_handler(start_work_date_entered, state=StoryPart.waiting_for_start_work_date)
-    dp.register_callback_query_handler(end_work_date_entered, state=StoryPart.waiting_for_end_work_date)
+    dp.register_callback_query_handler(action_date_entered,
+                                       state=[StoryPart.waiting_for_end_work_date, StoryPart.waiting_for_payoff_date])
+    dp.register_message_handler(payday_entered,
+                                state=[StoryPart.waiting_for_1_pay_day, StoryPart.waiting_for_2_pay_day])
+    dp.register_message_handler(payment_entered,
+                                state=[StoryPart.waiting_for_1_payment, StoryPart.waiting_for_2_payment])
     dp.register_message_handler(user_position_entered, state=StoryPart.waiting_for_user_position)
     dp.register_message_handler(user_salary_entered, state=StoryPart.waiting_for_user_salary)
     dp.register_message_handler(avr_salary_entered, state=StoryPart.waiting_for_avr_salary)
     dp.register_message_handler(story_conflict_entered, state=StoryPart.waiting_for_user_story_conflict)
     dp.register_message_handler(user_employer_discussion_entered, state=StoryPart.waiting_for_user_employer_discussion)
-
-
-
