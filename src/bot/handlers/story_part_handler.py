@@ -99,7 +99,7 @@ async def action_date_entered(callback_query: types.CallbackQuery, state: FSMCon
         current_state = await state.get_state()
         if StoryPart.waiting_for_payoff_date.state == current_state:
             await state.update_data(payoff_date=entered_date)
-        elif StoryPart.waiting_for_end_work_date == current_state:
+        elif StoryPart.waiting_for_end_work_date.state == current_state:
             await state.update_data(end_work_date=entered_date)
 
         await StoryPart.waiting_for_user_position.set()
