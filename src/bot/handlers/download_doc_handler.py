@@ -6,7 +6,7 @@ from aiogram.dispatcher import filters
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from docx.document import Document
 
-from common.data_converter import convert_to_doc, get_oof_profit_calculation
+from common.data_converter import convert_to_doc, get_oof_profit_calculation, get_payoff_profit_calculation
 from keyboards import emojis, get_start_menu_kb
 from keyboards.claim_parts import PART_NAMES, get_claim_parts_kb
 from repository import Repository
@@ -38,12 +38,23 @@ async def download_doc(message: types.Message):
 
     claim_theme: Optional[str] = repository.get_current_claim_theme(message.from_user.id)
     actions: Optional[List[str]] = repository.get_claim_tmp_actions(claim_theme, "story")
-    if actions is not None and "enter_avr_salary" in actions:
+    if actions is not None and "enter_end_date" in actions:
         calc_doc: Document = get_oof_profit_calculation(claim_data["claim_data"])
         with BytesIO() as calc_doc_file:
             calc_doc.save(calc_doc_file)
             calc_doc_file.seek(0)
             calc_doc_file.name = "Расчет задолженности по заработной плате за время вынужденного прогула.docx"
+            await message.answer("Сгенерированное приложение:")
+            await message.answer_document(document=calc_doc_file,
+                                          disable_content_type_detection=True,
+                                          reply_markup=ReplyKeyboardRemove())
+
+    if actions is not None and "enter_payoff_date" in actions:
+        payoff_calc_doc: Document = get_payoff_profit_calculation(claim_data["claim_data"])
+        with BytesIO() as calc_doc_file:
+            payoff_calc_doc.save(calc_doc_file)
+            calc_doc_file.seek(0)
+            calc_doc_file.name = "Расчет задолженности по заработной плате за задержку выплат.docx"
             await message.answer("Сгенерированное приложение:")
             await message.answer_document(document=calc_doc_file,
                                           disable_content_type_detection=True,

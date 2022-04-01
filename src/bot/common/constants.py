@@ -1,0 +1,1 @@
+WORK_DAYS_PER_MONTH: int = 20

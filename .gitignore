@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+/src/bot/playground/
+
+# MacOS
+.DS_Store
+

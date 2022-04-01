@@ -1,9 +1,10 @@
+import logging
 from collections import namedtuple
 from io import StringIO
 from typing import List
 from urllib.parse import quote_plus
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from lxml import etree
 from lxml.html import HtmlElement
 
@@ -55,19 +56,15 @@ async def resolve_court_address(city: str, court_subj: str, street: str) -> List
                       "Chrome/94.0.4606.81 Safari/537.36"
     }
 
-    async with ClientSession() as session:
-        async with session.get(url, headers=headers, ssl=False,) as resp:
-            body: str = await resp.text()
-            result = parse_court_data(body, city)
-            return result
-
-
-# test_data: dict = {
-#     "city": "Иваново",
-#     "court_subj": 37,
-#     "street": "Ленина"
-# }
-#
-#
-# loop = asyncio.get_event_loop()
-# loop.run_until_complete(resolve_court_address(**test_data))
+    try:
+        async with ClientSession() as session:
+            # For better user experience setup request timeout to 15 seconds
+            timeout = ClientTimeout(total=15)
+            async with session.get(url, headers=headers, ssl=False, timeout=timeout) as resp:
+                body: str = await resp.text()
+                result = parse_court_data(body, city)
+                return result
+    except Exception:
+        logger = logging.getLogger()
+        logger.exception("Error occurred during court address resolving")
+        return []
