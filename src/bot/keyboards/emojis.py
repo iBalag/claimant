@@ -23,4 +23,3 @@ double_exclamation_mark: str = "\U0000203C"
 magnifying_glass_tilted_left: str = "\U0001F50D"
 incoming_envelope: str = "\U0001F4E8"
 man_judge: str = "\U0001F468\U0000200D\U00002696\U0000FE0F"
-
