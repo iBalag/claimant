@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pymorphy2
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.shared import Inches, Pt
+from docx.shared import Inches, Pt, RGBColor
 from docx.text.paragraph import Paragraph
 
 from common import calc_oof_profit, PayOffCalculation, calc_payoff_profit
@@ -24,7 +24,13 @@ def convert_to_doc(data: dict) -> Document:
 
     # header
     header: Paragraph = claim_doc.add_paragraph()
-    header.text = get_head_text(data["claim_data"]["head"])
+    court_address, claimant_info, passport_info, employer_info = get_head_text(data["claim_data"]["head"])
+    header.add_run(court_address)
+    header.add_run(claimant_info)
+    passport_info_font = header.add_run(passport_info).font
+    passport_info_font.color.rgb = RGBColor(255, 0, 0)
+    passport_info_font.bold = True
+    header.add_run(employer_info)
     header.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
 
     # theme
@@ -94,22 +100,23 @@ def get_footer_text(head_data: dict) -> str:
     return f"{claim_date.strftime('%d.%m.%Y'): <50}{short_user_name}"
 
 
-def get_head_text(head_data: dict) -> str:
+def get_head_text(head_data: dict) -> Tuple[str, str, str, str]:
     full_employer_name: str = get_full_employee_name(head_data)
-    lines = [
-        f"В {head_data['chosen_court'][0]}",
-        f"Адрес: {head_data['chosen_court'][1]}",
-        "",
-        f"Истец: {head_data['user_name']}",
+    court_address: str = (f"В {head_data['chosen_court'][0]}\n"
+                          f"Адрес: {head_data['chosen_court'][1]}\n\n")
+
+    claimant_info: str = (
+        f"Истец: {head_data['user_name']}\n"
         f"Адрес: {head_data['user_post_code']}, г. {head_data['chosen_city']}, "
         f"ул. {head_data['chosen_street']}, д. {head_data['house_chosen']}"
-        f"{', кв. ' + head_data['apartment_chosen'] if head_data['apartment_chosen'] != '' else ''}",
-        "",
-        f"Ответчик: {full_employer_name}",
-        f"Адрес: {head_data['chosen_employer_address']}"
-    ]
+        f"{', кв. ' + head_data['apartment_chosen'] if head_data['apartment_chosen'] != '' else ''}\n")
 
-    return '\n'.join(lines)
+    passport_info: str = "Дата и место рождения истца; Cерия и номер паспорта истца\n\n"
+
+    employer_info: str = (f"Ответчик: {full_employer_name}\n"
+                          f"Адрес: {head_data['chosen_employer_address']}")
+
+    return court_address, claimant_info, passport_info, employer_info
 
 
 def get_story_parts(data: dict) -> List[str]:
