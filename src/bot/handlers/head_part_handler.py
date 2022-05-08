@@ -161,7 +161,14 @@ async def option_chosen(message: types.Message, state: FSMContext):
         return
     if option.endswith("указать суд самостоятельно"):
         await HeadPart.waiting_for_court_entered.set()
-        await message.answer("Укажите наименование и адрес суда. Например:\n"
+        await message.answer("Вы можете найти суд самостоятельно: на выбор - либо по адресу вашей регистрации, "
+                             "либо по адресу  организации, в которой вы работаете. Чтобы найти суд, пройдите "
+                             "по [ссылке](https://sudrf.ru/index.php?id=300#podsud) и введите нужный адрес.",
+                             reply_markup=ReplyKeyboardRemove(),
+                             parse_mode="Markdown")
+
+        await message.answer("Укажите наименование адрес суда (вместе с индексом) в следующем формате: "
+                             "наименование суда, индекс, адрес. Например:\n"
                              "Фрунзенский районный суд г. Иваново, 153003, г. Иваново, ул. Мархлевского, д. 33",
                              reply_markup=ReplyKeyboardRemove())
         return
@@ -180,6 +187,12 @@ async def court_entered(message: types.Message, state: FSMContext):
         await message.answer("Введите название организации и её ИНН, в которой вы работаете. "
                              "Если не знаете ИНН, введите просто название.\n"
                              "Например: OOO \"Рога и Копыта\" (ИНН 555555555555)")
+    else:
+        await message.reply("Наименование и адрес суда указаны в неверном формате. "
+                            "Укажите, пожалуйста, наименование и адрес суда (вместе с индексом) в следующем формате: "
+                            "наименование суда, индекс, адрес. Например:\n"
+                            "Фрунзенский районный суд г. Иваново, 153003, г. Иваново, ул. Мархлевского, д. 33",
+                            reply_markup=ReplyKeyboardRemove())
 
 
 async def court_chosen(callback_query: types.CallbackQuery, state: FSMContext):

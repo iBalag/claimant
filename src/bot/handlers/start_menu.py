@@ -152,7 +152,7 @@ def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start_menu, commands=["start"], state="*")
     dp.register_message_handler(start_menu, filters.Regexp(f"^{emojis.left_arrow} назад"))
     dp.register_message_handler(show_bot_info, filters.Regexp(f"(^{emojis.bookmark_tabs} узнать о боте$|/help)"))
-    dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.fist} выбор операции|/choose_template"))
+    dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.face_with_monocle} выбор иска|/choose_template"))
     dp.register_message_handler(choose_claim_tmp, filters.Regexp(f"^{emojis.left_arrow} к шаблонам"))
     dp.register_message_handler(choose_claim_sending,
                                 filters.Regexp(f"^{emojis.incoming_envelope} подача заявления|/sending"))
