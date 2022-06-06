@@ -113,15 +113,23 @@ async def show_claim_tmp_example(message: types.Message, claim_part):
 
 async def process_complete_part_editing(message: types.Message, state: FSMContext, claim_part: str):
     display_name: str = TERM_DISPLAY_NAME_MAP[claim_part]
-    await message.answer(f"Данные раздела '{display_name}' успешно заполнены.", reply_markup=ReplyKeyboardRemove())
     user_id = message.from_user.id
     user_data = await state.get_data()
-    repository: Repository = Repository()
-    claim_data: Optional[dict] = repository.get_claim_data(user_id)
-    new_claim_data: dict = {
-        f"claim_data.{claim_part}": user_data
-    }
-    repository.update_record("claim-data", claim_data["_id"], new_claim_data)
+
+    # check empty user entry
+    if not any(user_data):
+        await message.answer(f"{emojis.red_exclamation_mark}Вы не выбрали опцию или свой вариант в этом разделе. "
+                             f"Необходимо заполнить все разделы, чтобы получить сгенерированное заявление.",
+                             reply_markup=ReplyKeyboardRemove())
+    else:
+        repository: Repository = Repository()
+        claim_data: Optional[dict] = repository.get_claim_data(user_id)
+        new_claim_data: dict = {
+            f"claim_data.{claim_part}": user_data
+        }
+        repository.update_record("claim-data", claim_data["_id"], new_claim_data)
+        await message.answer(f"Данные раздела '{display_name}' успешно заполнены.", reply_markup=ReplyKeyboardRemove())
+
     await state.finish()
     claim_parts_kb: ReplyKeyboardMarkup = get_claim_parts_kb(message.from_user.id)
     await message.answer("Выберите часть искового заявления для заполнения", reply_markup=claim_parts_kb)
